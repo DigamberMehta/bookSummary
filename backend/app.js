@@ -6,7 +6,7 @@ import userRoutes from "./routes/user.route.js";
 import cookieParser from "cookie-parser";
 import uploadRoute from "./routes/uploadRoute.js";
 import aiRoute from "./routes/aiRoute.js";
-
+import ttsRoute from "./routes/ttsRoute.js"; 
 
 dotenv.config({});
 
@@ -25,7 +25,7 @@ app.use("/api/v1/user", userRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api", uploadRoute);
 app.use("/api", aiRoute);
-
+app.use("/api", ttsRoute); 
 
 connectDB();
 const PORT =3000;
