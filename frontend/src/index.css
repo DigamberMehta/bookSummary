@@ -68,10 +68,9 @@
 div::-webkit-scrollbar{
   display: none;
 }
-.page {
-  background-color: #f6f2eb; /* Light beige background */
-  color: #333; /* Dark text for better readability */
-  width: 100%;
+/* .page {
+  
+  color: #4a4a4a;        
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -79,4 +78,52 @@ div::-webkit-scrollbar{
   align-items: center;
   padding: 20px;
   border-radius: 8px;
+}  */
+/* 3D Book Effects */
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+.book-shadow {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Page Styling */
+.page {
+  background-color: #f0efe9;
+  color: #4a4a4a; 
+  border-right: var(--page-border);
+  box-shadow: inset 7px 0 30px -7px rgba(0, 0, 0, 0.1);
+  backface-visibility: hidden;
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Page Edge Effect */
+.page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to left, 
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.0) 100%);
+  z-index: 2;
+}
+
+
+/* Hover Effect */
+.page:hover {
+  box-shadow: inset 7px 0 30px -7px rgba(0, 0, 0, 0.2),
+    -5px 0 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Page Content Protection */
+.page > div {
+  z-index: 1;
+  position: relative;
 }

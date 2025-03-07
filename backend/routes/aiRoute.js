@@ -17,7 +17,7 @@ router.post("/summarize", async (req, res) => {
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(`Summarize this text: ${text}`);
+    const result = await model.generateContent(`Summarize this text, do not use markdown: ${text}`);
 
     const summary = result.response.text();
 
