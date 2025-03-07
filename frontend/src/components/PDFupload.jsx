@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const PDFUpload = ({ onFileSelect }) => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState(""); // Upload status message
+  const [uploadStatus, setUploadStatus] = useState("");
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
@@ -11,12 +11,10 @@ const PDFUpload = ({ onFileSelect }) => {
       setSelectedFile(file);
       setUploadStatus("Uploading...");
 
-      // Create FormData object for file upload
       const formData = new FormData();
       formData.append("pdf", file);
 
       try {
-        // Send file to backend
         const response = await fetch("http://localhost:3000/api/upload", {
           method: "POST",
           body: formData,
@@ -25,8 +23,8 @@ const PDFUpload = ({ onFileSelect }) => {
         const data = await response.json();
 
         if (response.ok) {
-          setUploadStatus("Upload successful!");
-          onFileSelect(data.filePath); // Pass the uploaded file path to the parent component
+          setUploadStatus("Upload successful! Extracting text...");
+          fetchExtractedText(data.filePath);
         } else {
           setUploadStatus("Upload failed. Please try again.");
         }
@@ -36,6 +34,23 @@ const PDFUpload = ({ onFileSelect }) => {
       }
     } else {
       alert("Please select a valid PDF file.");
+    }
+  };
+
+  const fetchExtractedText = async (filePath) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/extract-text?filePath=${filePath}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setUploadStatus("Text extracted successfully!");
+        onFileSelect(data.pages); // Pass structured page-wise text to parent
+      } else {
+        setUploadStatus("Failed to extract text.");
+      }
+    } catch (error) {
+      console.error("Error extracting text:", error);
+      setUploadStatus("Error extracting text.");
     }
   };
 
