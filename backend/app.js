@@ -5,7 +5,7 @@ import cors from "cors";
 import userRoutes from "./routes/user.route.js";
 import cookieParser from "cookie-parser";
 import uploadRoute from "./routes/uploadRoute.js";
-
+import aiRoute from "./routes/aiRoute.js";
 
 
 dotenv.config({});
@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use("/api/v1/user", userRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api", uploadRoute);
-
+app.use("/api", aiRoute);
 
 
 connectDB();
