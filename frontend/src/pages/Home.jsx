@@ -10,10 +10,8 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(0);
 
   // -- Audio states --
-  const [playingType, setPlayingType] = useState(null); 
-  // e.g. "book", "summary", or null
-  const [audioStatus, setAudioStatus] = useState("stopped"); 
-  // "playing", "paused", "stopped"
+  const [playingType, setPlayingType] = useState(null); // e.g. "book", "summary", or null
+  const [audioStatus, setAudioStatus] = useState("stopped"); // "playing", "paused", "stopped"
   const [loadingType, setLoadingType] = useState(null);
   const audioRef = useRef(new Audio());
 
@@ -169,46 +167,50 @@ const Home = () => {
   };
 
   return (
-    <>
-      <div>
-        {/* PDF Upload */}
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 p-6">
-          <PDFUpload onFileSelect={setExtractedPages} />
-        </div>
-
-        {extractedPages && (
-          <div className="mt-6 overflow-x-hidden">
-            <p className="text-green-400">Text extracted successfully!</p>
-
-            {/* Book Component */}
-            <Book
-              extractedPages={extractedPages}
-              pageFlipRef={pageFlipRef}
-              currentPage={currentPage}
-              summaries={summaries}
-
-              /* Audio Props */
-              handleAudio={handleAudio}
-              playingType={playingType}
-              audioStatus={audioStatus}
-              loadingType={loadingType}
-
-              /* Bookmark Props */
-              bookmarks={bookmarks}
-              isCurrentPageBookmarked={isCurrentPageBookmarked}
-              toggleBookmark={toggleBookmark}
-              selectedColor={selectedColor}
-              setSelectedColor={setSelectedColor}
-              colors={colors}
-              goToBookmark={goToBookmark}
-
-              /* Flipbook Callback */
-              handleFlip={handleFlip}
-            />
+    <div className="min-h-screen bg-gray-950">
+      {/* PDF Upload Modal */}
+      {!extractedPages && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-2xl rounded-xl bg-gray-900 p-8 shadow-2xl">
+            <PDFUpload onFileSelect={setExtractedPages} />
+            
+            {/* Optional: Add a close button if needed */}
+            <button
+              className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-200"
+              onClick={() => setExtractedPages([])} // Reset or handle differently if needed
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+
+      {/* Book Component */}
+      {extractedPages && (
+        <div className="w-full overflow-x-hidden">
+          <Book
+            extractedPages={extractedPages}
+            pageFlipRef={pageFlipRef}
+            currentPage={currentPage}
+            summaries={summaries}
+            handleAudio={handleAudio}
+            playingType={playingType}
+            audioStatus={audioStatus}
+            loadingType={loadingType}
+            bookmarks={bookmarks}
+            isCurrentPageBookmarked={isCurrentPageBookmarked}
+            toggleBookmark={toggleBookmark}
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
+            colors={colors}
+            goToBookmark={goToBookmark}
+            handleFlip={handleFlip}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 
