@@ -1,45 +1,19 @@
-// src/components/LandingPage.jsx
-import React from 'react';
-import Slider from 'react-slick';
-
- 
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PDFUpload from './PDFUpload';
+import FeaturesSection from './FeaturesSection';
+import CarouselSection from './CarouselSection';
 
 const LandingPage = () => {
-  
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 3,     
-    slidesToScroll: 1,
-    autoplay: true,     
-    autoplaySpeed: 3000, 
-    responsive: [
-      {
-        breakpoint: 1024,  
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 640,  // Below 640px
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
-  };
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
       <header className="bg-white shadow-md">
         <nav className="flex items-center justify-between px-4 py-4 md:px-8">
-          <div className="text-2xl font-bold text-gray-800">
-            Book Summaries
-          </div>
+          <div className="text-2xl font-bold text-gray-800">Book Summaries</div>
           <div>
             <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition duration-200">
               Sign In
@@ -53,137 +27,42 @@ const LandingPage = () => {
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-6">
             Get Quick, Insightful Summaries of Your Favorite Books
           </h1>
-          <p className="text-lg md:text-xl text-gray-700 mb-8">
-            Tired of reading lengthy books without truly capturing their essence? Our summarized highlights help you absorb key insights in minutes.
-          </p>
-          <button className="bg-indigo-600 text-white px-6 py-3 rounded font-semibold hover:bg-indigo-700 transition duration-200">
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="bg-indigo-600 text-white px-6 py-3 rounded font-semibold hover:bg-indigo-700 transition duration-200"
+          >
             Start Summarizing Now
           </button>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-white py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">
-            Features
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-indigo-100 p-6 rounded shadow-sm">
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Summaries in Seconds</h3>
-              <p className="text-gray-600">
-                Our AI-powered engine processes entire books and gives you concise summaries in seconds.
-              </p>
-            </div>
-            <div className="bg-indigo-100 p-6 rounded shadow-sm">
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Save Time & Effort</h3>
-              <p className="text-gray-600">
-                Gain valuable insights quickly without needing to read through hundreds of pages.
-              </p>
-            </div>
-            <div className="bg-indigo-100 p-6 rounded shadow-sm">
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Customize Focus</h3>
-              <p className="text-gray-600">
-                Highlight the sections you care about or dive deeper into chapters that interest you most.
-              </p>
-            </div>
+      {/* PDF Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-2xl rounded-xl bg-gray-900 p-8 shadow-2xl">
+            <PDFUpload
+              onFileSelect={(pages) => {
+                setShowUploadModal(false);
+                navigate('/', { state: { extractedPages: pages } });
+              }}
+            />
+            <button
+              className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-200"
+              onClick={() => setShowUploadModal(false)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* NEW: Carousel Section */}
-      <section className="bg-gray-50 py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-            Featured Books
-          </h2>
+      {/* Features Section */}
+      <FeaturesSection />
 
-          <Slider {...settings}>
-            {/* Slide 1 */}
-            <div className="p-4">
-              <div className="bg-white rounded shadow-md h-full flex flex-col items-center p-4">
-                <img
-                  src="https://via.placeholder.com/120x180"
-                  alt="Book 1"
-                  className="mb-4 w-32 h-48 object-cover"
-                />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Book Title One
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  A quick description of this book. Discover its main themes and highlights.
-                </p>
-              </div>
-            </div>
-
-            {/* Slide 2 */}
-            <div className="p-4">
-              <div className="bg-white rounded shadow-md h-full flex flex-col items-center p-4">
-                <img
-                  src="https://via.placeholder.com/120x180"
-                  alt="Book 2"
-                  className="mb-4 w-32 h-48 object-cover"
-                />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Book Title Two
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Another exciting book – get quick insights and summaries with ease.
-                </p>
-              </div>
-            </div>
-
-            {/* Slide 3 */}
-            <div className="p-4">
-              <div className="bg-white rounded shadow-md h-full flex flex-col items-center p-4">
-                <img
-                  src="https://via.placeholder.com/120x180"
-                  alt="Book 3"
-                  className="mb-4 w-32 h-48 object-cover"
-                />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Book Title Three
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Dive into the essential lessons from this popular read in just a few minutes.
-                </p>
-              </div>
-            </div>
-
-            {/* Slide 4 */}
-            <div className="p-4">
-              <div className="bg-white rounded shadow-md h-full flex flex-col items-center p-4">
-                <img
-                  src="https://via.placeholder.com/120x180"
-                  alt="Book 4"
-                  className="mb-4 w-32 h-48 object-cover"
-                />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Book Title Four
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Gain a fresh perspective with an overview of key takeaways.
-                </p>
-              </div>
-            </div>
-            
-            {/* Add more slides as needed */}
-          </Slider>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="bg-indigo-600 text-white py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
-          <p className="text-lg mb-8">
-            Sign up now and dive into the summaries of thousands of popular books.
-          </p>
-          <button className="bg-white text-indigo-600 px-6 py-3 rounded font-semibold hover:bg-gray-100 transition duration-200">
-            Create Your Free Account
-          </button>
-        </div>
-      </section>
+      {/* Carousel Section */}
+      <CarouselSection />
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white px-4 py-4 text-center">

@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import PDFUpload from "@/components/PDFUpload";
+import { useNavigate, useLocation } from "react-router-dom";
 import Book from "@/components/Book";
 
 const Home = () => {
-  const [extractedPages, setExtractedPages] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [extractedPages, setExtractedPages] = useState(
+    location.state?.extractedPages || null
+  );
 
   // -- All "Book" states --
   const [summaries, setSummaries] = useState({});
@@ -166,28 +170,15 @@ const Home = () => {
     pageFlipRef.current?.pageFlip().flip(physicalPage);
   };
 
+  // Redirect to landing if no extracted pages
+  useEffect(() => {
+    if (!extractedPages) {
+      navigate('/landingpage');
+    }
+  }, [extractedPages, navigate]);
+
   return (
     <div className="min-h-screen bg-gray-950">
-      {/* PDF Upload Modal */}
-      {!extractedPages && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative mx-4 w-full max-w-2xl rounded-xl bg-gray-900 p-8 shadow-2xl">
-            <PDFUpload onFileSelect={setExtractedPages} />
-            
-            {/* Optional: Add a close button if needed */}
-            <button
-              className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-200"
-              onClick={() => setExtractedPages([])} // Reset or handle differently if needed
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Book Component */}
       {extractedPages && (
         <div className="w-full overflow-x-hidden">
           <Book

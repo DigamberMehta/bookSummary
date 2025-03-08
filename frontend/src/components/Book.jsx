@@ -20,7 +20,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 p-8">
+    <div className="flex flex-col items-center min-h-screen bg-[url(/Users/digamber/Desktop/Book_Summary/frontend/src/assets/AdobeStock_302040655.jpeg)] bg-cover bg-center p-8">
       {/* Top Bar */}
       <TopBar
         colors={colors}
@@ -40,9 +40,8 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         onFlip={handleFlip}
       >
         {/* Front Cover */}
-        <div className="w-full h-full bg-[url(https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">
-          <h1 className="text-4xl font-bold text-white mb-4">Storybook AI</h1>
-          <p className="text-xl text-white">Interactive Reading Experience</p>
+        <div className="w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">
+         
         </div>
 
         {/* Content Pages */}
