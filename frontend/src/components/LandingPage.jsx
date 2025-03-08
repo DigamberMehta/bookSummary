@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import PDFUpload from './PDFUpload';
 import FeaturesSection from './FeaturesSection';
 import CarouselSection from './CarouselSection';
+import Banner from './Banner';
+import Header from './Header';
+import Footer from './Footer';
 
 const LandingPage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -11,18 +14,11 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <header className="bg-white shadow-md">
-        <nav className="flex items-center justify-between px-4 py-4 md:px-8">
-          <div className="text-2xl font-bold text-gray-800">Book Summaries</div>
-          <div>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition duration-200">
-              Sign In
-            </button>
-          </div>
-        </nav>
-      </header>
+      <Header />
+      <Banner />
 
-      <section className="flex-1 flex items-center justify-center bg-indigo-50 px-4 py-16">
+
+      <section className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="max-w-3xl text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-6">
             Get Quick, Insightful Summaries of Your Favorite Books
@@ -64,10 +60,7 @@ const LandingPage = () => {
       {/* Carousel Section */}
       <CarouselSection />
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white px-4 py-4 text-center">
-        <p className="text-sm">&copy; {new Date().getFullYear()} Book Summaries. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 };
