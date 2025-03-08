@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import { AuthProvider } from './context/authContext'
+import LandingPage from './components/LandingPage'
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: <Home />,
+      },
+      {
+        path: '/landingpage',
+        element: <LandingPage />,
       },
       {
         path: '/auth',

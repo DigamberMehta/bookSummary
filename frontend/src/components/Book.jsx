@@ -3,27 +3,21 @@ import HTMLFlipBook from "react-pageflip";
 import TopBar from "./TopBar";
 import AudioControl from "./AudioControl";
 
-const Book = ({
-  extractedPages,
-  pageFlipRef,
-  currentPage,
-  summaries,
-  handleAudio,
-  playingType,
-  audioStatus,
-  loadingType,
-  // Bookmarks
-  bookmarks,
-  isCurrentPageBookmarked,
-  toggleBookmark,
-  selectedColor,
-  setSelectedColor,
-  colors,
-  goToBookmark,
-  // Flip event
-  handleFlip,
+const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip,
 }) => {
   if (!extractedPages) return null;
+
+  // Total pages including covers (2 covers + 2 * content pages)
+  const totalPages = 2 + extractedPages.length * 2;
+
+  // Navigation functions
+  const goPrevious = () => {
+    pageFlipRef.current.pageFlip().flipPrev("top");
+  };
+
+  const goNext = () => {
+    pageFlipRef.current.pageFlip().flipNext("top");
+  };
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 p-8">
@@ -35,19 +29,20 @@ const Book = ({
         bookmarks={bookmarks}
         goToBookmark={goToBookmark}
       />
-        <HTMLFlipBook
-          ref={pageFlipRef}
-          width={550}
-          height={700}
-          maxShadowOpacity={0.3}
-          showCover={true}
-          onFlip={handleFlip}
-          
-        >
 
-        {/* Cover Page */}
+      {/* Flipbook */}
+      <HTMLFlipBook
+        ref={pageFlipRef}
+        width={550}
+        height={700}
+        maxShadowOpacity={0.3}
+        showCover={true}
+        onFlip={handleFlip}
+      >
+        {/* Front Cover */}
         <div className="w-full h-full bg-[url(https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">
-          
+          <h1 className="text-4xl font-bold text-white mb-4">Storybook AI</h1>
+          <p className="text-xl text-white">Interactive Reading Experience</p>
         </div>
 
         {/* Content Pages */}
@@ -60,7 +55,6 @@ const Book = ({
           >
             <div className="flex justify-between items-start p-6 pb-4">
               <span className="text-gray-500 font-medium">Page {page.pageNumber}</span>
-
               <AudioControl
                 text={page.text}
                 type="book"
@@ -87,7 +81,6 @@ const Book = ({
           >
             <div className="flex justify-between items-start p-6 pb-4">
               <span className="text-blue-500 font-medium">AI Summary</span>
-
               <AudioControl
                 text={summaries[page.pageNumber]}
                 type="summary"
@@ -106,7 +99,41 @@ const Book = ({
             </div>
           </div>,
         ])}
+
+        {/* Back Cover */}
+        <div className="w-full h-full bg-[url(https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-1.2.1&auto=format&fit=crop&w=1355&q=80)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">
+          <div className="bg-black bg-opacity-50 p-8 rounded-lg">
+            <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
+            <p className="text-lg text-white">Continue your journey with</p>
+            <p className="text-2xl text-blue-400 font-mono mt-2">Storybook AI</p>
+          </div>
+        </div>
       </HTMLFlipBook>
+
+      {/* Navigation Controls */}
+      <div className="flex items-center gap-4 mt-4">
+        <button
+          onClick={goPrevious}
+          disabled={currentPage === 0} // Disabled only on front cover
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          Previous
+        </button>
+
+        <span className="text-white font-medium">
+          {currentPage > 0 && currentPage <= extractedPages.length
+            ? `Page ${currentPage} of ${extractedPages.length}`
+            : "Cover Page"}
+        </span>
+
+        <button
+          onClick={goNext}
+          disabled={currentPage === totalPages - 1} // Disabled only on back cover
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
