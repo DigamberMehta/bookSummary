@@ -26,10 +26,10 @@ const CarouselSection = () => {
   const settings = {
     dots: true,
     infinite: true,
-    speed: 500,
+    speed: 800,
     slidesToShow: 8,
     slidesToScroll: 1,
-    autoplay: false,
+    autoplay: true,
     autoplaySpeed: 3000,
     prevArrow: <CustomPrevArrow />,
     nextArrow: <CustomNextArrow />,

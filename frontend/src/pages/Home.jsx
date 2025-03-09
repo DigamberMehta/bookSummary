@@ -8,14 +8,15 @@ const Home = () => {
   const [extractedPages, setExtractedPages] = useState(
     location.state?.extractedPages || null
   );
+  const [bookId, setBookId] = useState(null);
 
-  // -- All "Book" states --
+  // -- Book states --
   const [summaries, setSummaries] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
 
   // -- Audio states --
-  const [playingType, setPlayingType] = useState(null); // e.g. "book", "summary", or null
-  const [audioStatus, setAudioStatus] = useState("stopped"); // "playing", "paused", "stopped"
+  const [playingType, setPlayingType] = useState(null);
+  const [audioStatus, setAudioStatus] = useState("stopped");
   const [loadingType, setLoadingType] = useState(null);
   const audioRef = useRef(new Audio());
 
@@ -31,11 +32,36 @@ const Home = () => {
   // -- PageFlip Ref --
   const pageFlipRef = useRef(null);
 
-  // -- Check if current page is bookmarked --
+  // -- Save initial book data --
+  useEffect(() => {
+    const saveInitialBook = async () => {
+      if (extractedPages && !bookId) {
+        try {
+          const response = await fetch('http://localhost:3000/api/books', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pages: extractedPages.map(page => ({
+                pageNumber: page.pageNumber,
+                text: page.text
+              }))
+            })
+          });
+          const data = await response.json();
+          if (data.success) setBookId(data.bookId);
+        } catch (error) {
+          console.error('Error saving book:', error);
+        }
+      }
+    };
+    
+    saveInitialBook();
+  }, [extractedPages, bookId]);
+
+  // -- Bookmark logic --
   const isCurrentPageBookmarked = () =>
     bookmarks.some((b) => b.pageNumber === currentPage);
 
-  // -- Add/Remove bookmark --
   const toggleBookmark = () => {
     if (!extractedPages || !extractedPages[currentPage - 1]) return;
     const currentPageData = extractedPages[currentPage - 1];
@@ -54,40 +80,48 @@ const Home = () => {
     );
   };
 
-  // -- Summaries logic --
+  // -- Summary logic with DB sync --
   const fetchSummary = async (text, pageNumber) => {
-    if (!text || summaries[pageNumber]) return; 
+    if (!text || summaries[pageNumber] || !bookId) return;
+    
     try {
-      const response = await fetch("http://localhost:3000/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+      // Get summary from AI
+      const summaryResponse = await fetch('http://localhost:3000/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
       });
-      const data = await response.json();
-      if (data.success) {
-        setSummaries((prev) => ({ ...prev, [pageNumber]: data.summary }));
+      const summaryData = await summaryResponse.json();
+      
+      if (summaryData.success) {
+        // Update local state
+        setSummaries(prev => ({ ...prev, [pageNumber]: summaryData.summary }));
+        
+        // Update database
+        await fetch(`http://localhost:3000/api/books/${bookId}/page/${pageNumber}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ summary: summaryData.summary })
+        });
       }
     } catch (error) {
-      console.error(`Error fetching summary: ${error}`);
+      console.error('Summary error:', error);
     }
   };
 
-  // -- Pre-fetch summary for first page, if available --
+  // -- Pre-fetch first page summary --
   useEffect(() => {
-    if (extractedPages && extractedPages[0]?.text) {
+    if (extractedPages?.[0]?.text) {
       fetchSummary(extractedPages[0].text, extractedPages[0].pageNumber);
     }
   }, [extractedPages]);
 
-  // -- Flip event from FlipBook --
+  // -- Flip handler --
   const handleFlip = (flipData) => {
     const physicalPage = flipData.data;
-    let logicalPage = 0;
-    if (physicalPage > 0) {
-      logicalPage = Math.ceil(physicalPage / 2);
-    }
+    let logicalPage = physicalPage > 0 ? Math.ceil(physicalPage / 2) : 0;
 
-    // Stop audio when flipping pages
+    // Stop audio
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
     setPlayingType(null);
@@ -105,76 +139,66 @@ const Home = () => {
     });
   };
 
-  // -- Handle Play/Pause logic for Book/Summary audio --
+  // -- Audio handling (no DB sync) --
   const handleAudio = async (text, type) => {
     if (!text) return;
 
-    // If we're already dealing with the same type (e.g. "book" or "summary")
     if (playingType === type) {
-      // 1) If currently playing => pause
       if (audioStatus === "playing") {
         audioRef.current.pause();
         setAudioStatus("paused");
-      }
-      // 2) If currently paused => resume
-      else if (audioStatus === "paused") {
+      } else if (audioStatus === "paused") {
         audioRef.current.play();
         setAudioStatus("playing");
-      }
-      // 3) If "stopped" => treat like new playback (rare case)
-      else {
+      } else {
         await fetchAndPlayAudio(text, type);
       }
     } else {
-      // Different type or not playing any audio => stop old audio and fetch new
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setAudioStatus("stopped");
-
       setPlayingType(type);
       await fetchAndPlayAudio(text, type);
     }
   };
 
-  // -- Helper: fetch TTS audio from API, then play it --
   const fetchAndPlayAudio = async (text, type) => {
     try {
       setLoadingType(type);
-      const response = await fetch("http://localhost:3000/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+      const ttsResponse = await fetch('http://localhost:3000/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
       });
-      const data = await response.json();
-      if (data.success) {
-        audioRef.current.src = `data:audio/mp3;base64,${data.audioContent}`;
+      const ttsData = await ttsResponse.json();
+      
+      if (ttsData.success) {
+        // Play audio directly (no DB saving)
+        audioRef.current.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
         audioRef.current.play();
-        setAudioStatus("playing");
+        setAudioStatus('playing');
 
-        // When audio ends, reset
         audioRef.current.onended = () => {
           setAudioStatus("stopped");
           setPlayingType(null);
         };
       }
     } catch (error) {
-      console.error("TTS Error:", error);
+      console.error('TTS Error:', error);
     } finally {
       setLoadingType(null);
     }
   };
 
-  // -- Jump to bookmark page --
+  // -- Bookmark navigation --
   const goToBookmark = (pageNumber) => {
     const physicalPage = pageNumber * 2 - 1;
     pageFlipRef.current?.pageFlip().flip(physicalPage);
   };
 
-  // Redirect to landing if no extracted pages
+  // -- Redirect if no pages --
   useEffect(() => {
-    if (!extractedPages) {
-      navigate('/landingpage');
-    }
+    if (!extractedPages) navigate('/landingpage');
   }, [extractedPages, navigate]);
 
   return (
