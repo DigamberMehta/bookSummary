@@ -7,7 +7,7 @@ const Home = () => {
   const { bookId } = useParams(); // Get bookId from URL
 
   // -- Book states --
-  const [extractedPages, setExtractedPages] = useState(null);
+  const [book, setBook] = useState(null); // Store the entire book data
   const [summaries, setSummaries] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,15 @@ const Home = () => {
         const data = await response.json();
 
         if (data.success) {
-          setExtractedPages(data.book.pages);
-          setSummaries(data.book.summaries || {});
+          setBook(data.book); // Store the entire book data
+          // Initialize summaries from the book data
+          const initialSummaries = {};
+          data.book.pages.forEach((page) => {
+            if (page.summary) {
+              initialSummaries[page.pageNumber] = page.summary;
+            }
+          });
+          setSummaries(initialSummaries);
           setBookmarks(data.book.bookmarks || []);
         } else {
           navigate("/landingpage"); // Redirect if book not found
@@ -61,8 +68,8 @@ const Home = () => {
     bookmarks.some((b) => b.pageNumber === currentPage);
 
   const toggleBookmark = () => {
-    if (!extractedPages || !extractedPages[currentPage - 1]) return;
-    const currentPageData = extractedPages[currentPage - 1];
+    if (!book?.pages || !book.pages[currentPage - 1]) return;
+    const currentPageData = book.pages[currentPage - 1];
 
     const updatedBookmarks = isCurrentPageBookmarked()
       ? bookmarks.filter((b) => b.pageNumber !== currentPage)
@@ -100,8 +107,7 @@ const Home = () => {
 
       if (summaryData.success) {
         // Update local state
-        const updatedSummaries = { ...summaries, [pageNumber]: summaryData.summary };
-        setSummaries(updatedSummaries);
+        setSummaries((prev) => ({ ...prev, [pageNumber]: summaryData.summary }));
 
         // Update database
         await fetch(`http://localhost:3000/api/books/${bookId}/page/${pageNumber}`, {
@@ -117,10 +123,10 @@ const Home = () => {
 
   // -- Pre-fetch first page summary --
   useEffect(() => {
-    if (extractedPages?.[0]?.text) {
-      fetchSummary(extractedPages[0].text, extractedPages[0].pageNumber);
+    if (book?.pages?.[0]?.text && !summaries[1]) {
+      fetchSummary(book.pages[0].text, 1);
     }
-  }, [extractedPages]);
+  }, [book, summaries]);
 
   // -- Flip handler --
   const handleFlip = (flipData) => {
@@ -138,7 +144,7 @@ const Home = () => {
 
     // Pre-fetch adjacent pages
     [logicalPage, logicalPage + 1].forEach((p) => {
-      const pageData = extractedPages?.[p - 1];
+      const pageData = book?.pages?.[p - 1];
       if (pageData?.text && !summaries[p]) {
         fetchSummary(pageData.text, p);
       }
@@ -206,12 +212,16 @@ const Home = () => {
     return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Loading...</div>;
   }
 
+  if (!book) {
+    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Book not found</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-950">
-      {extractedPages && (
+      {book.pages && (
         <div className="w-full overflow-x-hidden">
           <Book
-            extractedPages={extractedPages}
+            extractedPages={book.pages}
             pageFlipRef={pageFlipRef}
             currentPage={currentPage}
             summaries={summaries}
