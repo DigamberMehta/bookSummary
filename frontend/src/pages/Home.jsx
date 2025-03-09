@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Book from "@/components/Book";
 
 const Home = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [extractedPages, setExtractedPages] = useState(
-    location.state?.extractedPages || null
-  );
-  const [bookId, setBookId] = useState(null);
+  const { bookId } = useParams(); // Get bookId from URL
 
   // -- Book states --
+  const [extractedPages, setExtractedPages] = useState(null);
   const [summaries, setSummaries] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // -- Audio states --
   const [playingType, setPlayingType] = useState(null);
@@ -24,39 +22,39 @@ const Home = () => {
   const [bookmarks, setBookmarks] = useState([]);
   const [selectedColor, setSelectedColor] = useState("#FF6B6B");
   const colors = [
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", 
-    "#FFEEAD", "#D4A5A5", "#79B9C6", "#A2E1DB", 
+    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
+    "#FFEEAD", "#D4A5A5", "#79B9C6", "#A2E1DB",
     "#E3A3CA", "#F0E14A",
   ];
 
   // -- PageFlip Ref --
   const pageFlipRef = useRef(null);
 
-  // -- Save initial book data --
+  // -- Fetch book data on mount --
   useEffect(() => {
-    const saveInitialBook = async () => {
-      if (extractedPages && !bookId) {
-        try {
-          const response = await fetch('http://localhost:3000/api/books', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              pages: extractedPages.map(page => ({
-                pageNumber: page.pageNumber,
-                text: page.text
-              }))
-            })
-          });
-          const data = await response.json();
-          if (data.success) setBookId(data.bookId);
-        } catch (error) {
-          console.error('Error saving book:', error);
+    const fetchBook = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/books/${bookId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setExtractedPages(data.book.pages);
+          setSummaries(data.book.summaries || {});
+          setBookmarks(data.book.bookmarks || []);
+        } else {
+          navigate("/landingpage"); // Redirect if book not found
         }
+      } catch (error) {
+        console.error("Error fetching book:", error);
+        navigate("/landingpage"); // Redirect on error
+      } finally {
+        setLoading(false);
       }
     };
-    
-    saveInitialBook();
-  }, [extractedPages, bookId]);
+
+    if (bookId) fetchBook();
+    else navigate("/landingpage"); // Redirect if no bookId
+  }, [bookId, navigate]);
 
   // -- Bookmark logic --
   const isCurrentPageBookmarked = () =>
@@ -66,46 +64,54 @@ const Home = () => {
     if (!extractedPages || !extractedPages[currentPage - 1]) return;
     const currentPageData = extractedPages[currentPage - 1];
 
-    setBookmarks((prev) =>
-      isCurrentPageBookmarked()
-        ? prev.filter((b) => b.pageNumber !== currentPage)
-        : [
-            ...prev,
-            {
-              pageNumber: currentPage,
-              color: selectedColor,
-              textSnippet: currentPageData.text.substring(0, 50) + "...",
-            },
-          ]
-    );
+    const updatedBookmarks = isCurrentPageBookmarked()
+      ? bookmarks.filter((b) => b.pageNumber !== currentPage)
+      : [
+          ...bookmarks,
+          {
+            pageNumber: currentPage,
+            color: selectedColor,
+            textSnippet: currentPageData.text.substring(0, 50) + "...",
+          },
+        ];
+
+    setBookmarks(updatedBookmarks);
+
+    // Sync bookmarks with backend
+    fetch(`http://localhost:3000/api/books/${bookId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookmarks: updatedBookmarks }),
+    }).catch((error) => console.error("Error updating bookmarks:", error));
   };
 
   // -- Summary logic with DB sync --
   const fetchSummary = async (text, pageNumber) => {
     if (!text || summaries[pageNumber] || !bookId) return;
-    
+
     try {
       // Get summary from AI
-      const summaryResponse = await fetch('http://localhost:3000/api/summarize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+      const summaryResponse = await fetch("http://localhost:3000/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
       });
       const summaryData = await summaryResponse.json();
-      
+
       if (summaryData.success) {
         // Update local state
-        setSummaries(prev => ({ ...prev, [pageNumber]: summaryData.summary }));
-        
+        const updatedSummaries = { ...summaries, [pageNumber]: summaryData.summary };
+        setSummaries(updatedSummaries);
+
         // Update database
         await fetch(`http://localhost:3000/api/books/${bookId}/page/${pageNumber}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ summary: summaryData.summary })
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ summary: summaryData.summary }),
         });
       }
     } catch (error) {
-      console.error('Summary error:', error);
+      console.error("Summary error:", error);
     }
   };
 
@@ -165,18 +171,18 @@ const Home = () => {
   const fetchAndPlayAudio = async (text, type) => {
     try {
       setLoadingType(type);
-      const ttsResponse = await fetch('http://localhost:3000/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+      const ttsResponse = await fetch("http://localhost:3000/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
       });
       const ttsData = await ttsResponse.json();
-      
+
       if (ttsData.success) {
         // Play audio directly (no DB saving)
         audioRef.current.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
         audioRef.current.play();
-        setAudioStatus('playing');
+        setAudioStatus("playing");
 
         audioRef.current.onended = () => {
           setAudioStatus("stopped");
@@ -184,7 +190,7 @@ const Home = () => {
         };
       }
     } catch (error) {
-      console.error('TTS Error:', error);
+      console.error("TTS Error:", error);
     } finally {
       setLoadingType(null);
     }
@@ -196,10 +202,9 @@ const Home = () => {
     pageFlipRef.current?.pageFlip().flip(physicalPage);
   };
 
-  // -- Redirect if no pages --
-  useEffect(() => {
-    if (!extractedPages) navigate('/landingpage');
-  }, [extractedPages, navigate]);
+  if (loading) {
+    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-950">
