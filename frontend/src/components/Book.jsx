@@ -31,13 +31,15 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       />
 
       {/* Flipbook */}
-      <HTMLFlipBook
-        ref={pageFlipRef}
+        <HTMLFlipBook
         width={550}
         height={700}
-        maxShadowOpacity={0.3}
         showCover={true}
+        disableFlipByClick={true}    
+        useMouseEvents={true}      
+        useTouchEvents={true}      
         onFlip={handleFlip}
+        ref={pageFlipRef}
       >
         {/* Front Cover */}
         <div className="w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">

@@ -91,6 +91,7 @@ div::-webkit-scrollbar{
 /* Page Styling */
 .page {
   background-color: #f0efe9;
+  user-select: text !important;
   color: #4a4a4a; 
   border-right: var(--page-border);
   box-shadow: inset 7px 0 30px -7px rgba(0, 0, 0, 0.1);
