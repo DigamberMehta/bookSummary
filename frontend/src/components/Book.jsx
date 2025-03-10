@@ -1,10 +1,17 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import HTMLFlipBook from "react-pageflip";
 import TopBar from "./TopBar";
 import AudioControl from "./AudioControl";
 
 const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip,
 }) => {
+  const flipSoundRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize flip sound
+    flipSoundRef.current = new Audio("/sound/sound.mp3");
+  }, []);
+
   if (!extractedPages) return null;
 
   // Total pages including covers (2 covers + 2 * content pages)
@@ -20,7 +27,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-[url(/Users/digamber/Desktop/Book_Summary/frontend/src/assets/AdobeStock_302040655.jpeg)] bg-cover bg-center p-8">
+    <div className="flex flex-col items-center min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-8">
       {/* Top Bar */}
       <TopBar
         colors={colors}
@@ -31,20 +38,27 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       />
 
       {/* Flipbook */}
-        <HTMLFlipBook
+      <HTMLFlipBook
         width={550}
         height={700}
         showCover={true}
-        disableFlipByClick={true}    
-        useMouseEvents={true}      
-        useTouchEvents={true}      
-        onFlip={handleFlip}
+        disableFlipByClick={true}
+        useMouseEvents={true}
+        useTouchEvents={true}
+        onFlip={(e) => {
+          // Play flip sound
+          if (flipSoundRef.current) {
+            flipSoundRef.current.currentTime = 0; // Reset audio to start
+            flipSoundRef.current.play().catch((error) => {
+              console.error("Failed to play flip sound:", error);
+            });
+          }
+          handleFlip(e);
+        }}
         ref={pageFlipRef}
       >
         {/* Front Cover */}
-        <div className="w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">
-         
-        </div>
+        <div className="w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat"></div>
 
         {/* Content Pages */}
         {extractedPages.flatMap((page, index) => [
@@ -55,7 +69,9 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start p-6 pb-4">
-              <span className="text-gray-500 font-medium">Page {page.pageNumber}</span>
+              <span className="text-gray-500 font-medium">
+                Page {page.pageNumber}
+              </span>
               <AudioControl
                 text={page.text}
                 type="book"
@@ -106,7 +122,9 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           <div className="bg-black bg-opacity-50 p-8 rounded-lg">
             <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
             <p className="text-lg text-white">Continue your journey with</p>
-            <p className="text-2xl text-blue-400 font-mono mt-2">Storybook AI</p>
+            <p className="text-2xl text-blue-400 font-mono mt-2">
+              Storybook AI
+            </p>
           </div>
         </div>
       </HTMLFlipBook>
@@ -116,9 +134,9 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         <button
           onClick={goPrevious}
           disabled={currentPage === 0} // Disabled only on front cover
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          Previous
+          <i className="fa-solid fa-chevron-left cursor-pointer"></i>
         </button>
 
         <span className="text-white font-medium">
@@ -130,9 +148,9 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         <button
           onClick={goNext}
           disabled={currentPage === totalPages - 1} // Disabled only on back cover
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          Next
+          <i className="fa-solid fa-chevron-right cursor-pointer"></i>
         </button>
       </div>
     </div>
