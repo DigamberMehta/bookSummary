@@ -1,11 +1,19 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import HTMLFlipBook from "react-pageflip";
 import TopBar from "./TopBar";
 import AudioControl from "./AudioControl";
+import EditModal from "./EditModal"; // Import EditModal
 
-const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip,
+const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook // Receive props from Home
 }) => {
   const flipSoundRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for Modal in Book Component
+  console.log("Book Component Props:", {
+    bookTitle,
+    bookCoverPage,
+    bookEndCoverPage
+  });
+
 
   useEffect(() => {
     // Initialize flip sound
@@ -20,6 +28,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
   // Navigation functions
   const goPrevious = () => {
     pageFlipRef.current.pageFlip().flipPrev("top");
+
   };
 
   const goNext = () => {
@@ -35,6 +44,29 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         setSelectedColor={setSelectedColor}
         bookmarks={bookmarks}
         goToBookmark={goToBookmark}
+      />
+
+      {/* Book Title and Update Button - Placed Below TopBar */}
+<div className="w-full max-w-4xl mx-auto mt-2 mb-4 p-4 flex flex-col items-center gap-2 backdrop-blur-sm bg-white/10 rounded-lg"> {/* Glassy effect background */}
+        <button
+          onClick={() => setIsModalOpen(true)} // Open modal on button click
+          className="px-4 py-2 text-white rounded-md text-sm" // Button style
+        >
+          Update Book Details
+        </button>
+        <h2 className="text-4xl font-bold text-white text-center bg-transparent"> {/* Book Title Style and transparent background */}
+         TITTLE :  {bookTitle}
+        </h2>
+      </div>
+
+      {/* Edit Modal */}
+      <EditModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialTitle={bookTitle} // Use props
+        initialCover={bookCoverPage} // Use props
+        initialEndCover={bookEndCoverPage} // Use props
+        onSave={handleSaveMetadataFromBook} // Use props and rename prop for clarity
       />
 
       {/* Flipbook */}
@@ -58,7 +90,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         ref={pageFlipRef}
       >
         {/* Front Cover */}
-        <div className="w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat"></div>
+        <div className={`w-full h-full bg-[url(${bookCoverPage})] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}></div>
 
         {/* Content Pages */}
         {extractedPages.flatMap((page, index) => [
@@ -118,7 +150,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         ])}
 
         {/* Back Cover */}
-        <div className="w-full h-full bg-[url(https://images.unsplash.com/photo-1589998059171-988d887df646?ixlib=rb-1.2.1&auto=format&fit=crop&w=1355&q=80)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat">
+        <div className={`w-full h-full bg-[url(${bookEndCoverPage})] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}>
           <div className="bg-black bg-opacity-50 p-8 rounded-lg">
             <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
             <p className="text-lg text-white">Continue your journey with</p>

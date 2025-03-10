@@ -46,5 +46,29 @@ router.get('/api/books/:bookId', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+// Update book metadata (title/covers)
+router.patch('/api/books/:bookId', async (req, res) => {
+  try {
+    const { title, coverPage, endCoverPage } = req.body;
+    const updates = {};
+    
+    if (title !== undefined) updates.title = title;
+    if (coverPage !== undefined) updates.coverPage = coverPage;
+    if (endCoverPage !== undefined) updates.endCoverPage = endCoverPage;
+
+    const book = await Book.findByIdAndUpdate(
+      req.params.bookId,
+      { $set: updates },
+      { new: true }
+    );
+
+    res.json({ success: true, book });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 export default router;
+
+
+
