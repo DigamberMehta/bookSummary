@@ -1,314 +1,461 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import Book from "@/components/Book";
-import EditModal from "@/components/EditModal"; // Import EditModal
+import React, { useRef, useEffect, useState } from "react";
+import HTMLFlipBook from "react-pageflip";
+import TopBar from "./TopBar";
+import AudioControl from "./AudioControl";
+import EditModal from "./EditModal";
 
-const Home = () => {
-  const navigate = useNavigate();
-  const { bookId } = useParams(); // Get bookId from URL
+const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook }) => {
+  const flipSoundRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // -- Book states --
-  const [book, setBook] = useState(null); // Store the entire book data
-  const [summaries, setSummaries] = useState({});
-  const [currentPage, setCurrentPage] = useState(0);
-  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    flipSoundRef.current = new Audio("/sound/sound.mp3");
+  }, []);
 
-  // -- Audio states --
-  const [playingType, setPlayingType] = useState(null);
-  const [audioStatus, setAudioStatus] = useState("stopped");
-  const [loadingType, setLoadingType] = useState(null);
-  const audioRef = useRef(new Audio());
+  if (!extractedPages) return null;
 
-  // -- Bookmarks --
-  const [bookmarks, setBookmarks] = useState([]);
-  const [selectedColor, setSelectedColor] = useState("#FF6B6B");
-  const colors = [
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
-    "#FFEEAD", "#D4A5A5", "#79B9C6", "#A2E1DB",
-    "#E3A3CA", "#F0E14A",
-  ];
-
-  // -- PageFlip Ref --
-  const pageFlipRef = useRef(null);
-
-  // -- Metadata Editing --
-  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
+  const totalPages = 2 + extractedPages.length * 2;
+  const numberOfLines = 5; // Number of border lines
+  const lineSpacing = 3; // Spacing between lines - reduced for closer lines
+  const lineColor = 'rgb(220, 220, 220)'; // Light gray color
 
 
-  // -- Fetch book data on mount --
-  useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        const response = await fetch(`http://localhost:3000/api/books/${bookId}`);
-        const data = await response.json();
+  // Function to generate layered border style for left page with gaps and light gray color
+  const getLeftPageBorderStyle = () => {
+    let boxShadow = '';
+    for (let i = 1; i <= numberOfLines; i++) {
+      boxShadow += `-1px 0 0 ${lineColor}, ${-i * lineSpacing}px ${i * lineSpacing}px 0 ${lineColor}, `; // Vertical and horizontal offset for spacing, light gray color
+    }
+    boxShadow = boxShadow.slice(0, -2);
+    return boxShadow;
+  };
 
-        if (data.success) {
-          setBook(data.book); // Store the entire book data
+  // Function to generate layered border style for right page with gaps and light gray color
+  const getRightPageBorderStyle = () => {
+    let boxShadow = '';
+    for (let i = 1; i <= numberOfLines; i++) {
+      boxShadow += `1px 0 0 ${lineColor}, ${i * lineSpacing}px ${i * lineSpacing}px 0 ${lineColor}, `; // Vertical and horizontal offset for spacing, light gray color
+    }
+    boxShadow = boxShadow.slice(0, -2);
+    return boxShadow;
+  };
 
+  const goPrevious = () => {
+    pageFlipRef.current.pageFlip().flipPrev("top");
+  };
 
-          // Initialize summaries from the book data
-          const initialSummaries = {};
-          data.book.pages.forEach((page) => {
-            if (page.summary) {
-              initialSummaries[page.pageNumber] = page.summary;
-            }
-          });
-          setSummaries(initialSummaries);
-          setBookmarks(data.book.bookmarks || []);
-        } else {
-          navigate("/landingpage"); // Redirect if book not found
-        }
-      } catch (error) {
-        console.error("Error fetching book:", error);
-        navigate("/landingpage"); // Redirect on error
-      } finally {
-        setLoading(false);
-      }
-    };
+  const goNext = () => {
+    pageFlipRef.current.pageFlip().flipNext("top");
+  };
 
-    if (bookId) fetchBook();
-    else navigate("/landingpage"); // Redirect if no bookId
-  }, [bookId, navigate]);
+  return (
+    <div className="flex flex-col items-center min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-8">
+      <TopBar
+        colors={colors}
+        selectedColor={selectedColor}
+        setSelectedColor={setSelectedColor}
+        bookmarks={bookmarks}
+        goToBookmark={goToBookmark}
+      />
 
-  // -- Save Metadata Handler --
-  const handleSaveMetadata = async (metadata) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/books/${bookId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: metadata.editedTitle,
-          coverPage: metadata.editedCover,
-          endCoverPage: metadata.editedEndCover,
-        }),
-      });
+      <div className="w-full max-w-4xl mx-auto mt-2 mb-4 p-4 flex flex-col items-center gap-2 backdrop-blur-sm bg-white/10 rounded-lg">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 text-white rounded-md text-sm"
+        >
+          Update Book Details
+        </button>
+        <h2 className="text-4xl font-bold text-white text-center bg-transparent">
+         TITTLE :  {bookTitle}
+        </h2>
+      </div>
 
-      const data = await response.json();
-      if (data.success) {
-        setBook(data.book); // Update the book state with new metadata
-        // setIsEditingMetadata(false); // No longer needed, modal handles its own state
-      }
-    } catch (error) {
-      console.error("Error updating metadata:", error);
-    }
-  };
+      <EditModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialTitle={bookTitle}
+        initialCover={bookCoverPage}
+        initialEndCover={bookEndCoverPage}
+        onSave={handleSaveMetadataFromBook}
+      />
 
+      <HTMLFlipBook
+        width={550}
+        height={700}
+        showCover={true}
+        disableFlipByClick={true}
+        useMouseEvents={true}
+        useTouchEvents={true}
+        onFlip={(e) => {
+          if (flipSoundRef.current) {
+            flipSoundRef.current.currentTime = 0;
+            flipSoundRef.current.play().catch((error) => {
+              console.error("Failed to play flip sound:", error);
+            });
+          }
+          handleFlip(e);
+        }}
+        ref={pageFlipRef}
+      >
+        {/* Front Cover */}
+        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}></div>
 
-  // -- Bookmark logic --
-  const isCurrentPageBookmarked = () =>
-    bookmarks.some((b) => b.pageNumber === currentPage);
+        {/* Content Pages */}
+        {extractedPages.flatMap((page, index) => [
+          // Left Page (Original)
+          <div
+            key={`left-${index}`}
+            className="w-full h-full bg-white flex flex-col rounded-xl overflow-hidden left-page page"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start p-6 pb-4">
+              <span className="text-gray-500 font-medium">
+                Page {page.pageNumber}
+              </span>
+              <AudioControl
+                text={page.text}
+                type="book"
+                handleAudio={handleAudio}
+                playingType={playingType}
+                audioStatus={audioStatus}
+                loadingType={loadingType}
+                isBookmarked={isCurrentPageBookmarked()}
+                toggleBookmark={toggleBookmark}
+              />
+            </div>
+            <div className="flex-1 overflow-auto px-6 pb-6">
+              <p className="text-gray-700 leading-relaxed text-justify text-xs">
+                {page.text}
+              </p>
+            </div>
+          </div>,
 
-  const toggleBookmark = () => {
-    if (!book?.pages || !book.pages[currentPage - 1]) return;
-    const currentPageData = book.pages[currentPage - 1];
+          // Right Page (Summary)
+          <div
+            key={`right-${index}`}
+            className="w-full h-full bg-gray-50 flex flex-col rounded-xl overflow-hidden right-page page"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start p-6 pb-4">
+              <span className="text-blue-500 font-medium">AI Summary</span>
+              <AudioControl
+                text={summaries[page.pageNumber]}
+                type="summary"
+                handleAudio={handleAudio}
+                playingType={playingType}
+                audioStatus={audioStatus}
+                loadingType={loadingType}
+              />
+            </div>
+            <div className="flex-1 overflow-auto px-6 pb-6">
+              <p className="text-gray-700 leading-relaxed text-justify text-xs">
+                {summaries[page.pageNumber] || (
+                  <span className="text-gray-400">Generating summary...</span>
+                )}
+              </p>
+            </div>
+          </div>,
+        ])}
 
-    const updatedBookmarks = isCurrentPageBookmarked()
-      ? bookmarks.filter((b) => b.pageNumber !== currentPage)
-      : [
-          ...bookmarks,
-          {
-            pageNumber: currentPage,
-            color: selectedColor,
-            textSnippet: currentPageData.text.substring(0, 50) + "...",
-          },
-        ];
+        {/* Back Cover */}
+        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}>
+          <div className="bg-black bg-opacity-50 p-8 rounded-lg">
+            <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
+            <p className="text-lg text-white">Continue your journey with</p>
+            <p className="text-2xl text-blue-400 font-mono mt-2">
+              Storybook AI
+            </p>
+          </div>
+        </div>
+      </HTMLFlipBook>
 
-    setBookmarks(updatedBookmarks);
+      {/* Navigation Controls */}
+      <div className="flex items-center gap-4 mt-4">
+        <button
+          onClick={goPrevious}
+          disabled={currentPage === 0}
+          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          <i className="fa-solid fa-chevron-left cursor-pointer"></i>
+        </button>
 
-    // Sync bookmarks with backend
-    fetch(`http://localhost:3000/api/books/${bookId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookmarks: updatedBookmarks }),
-    }).catch((error) => console.error("Error updating bookmarks:", error));
-  };
+        <span className="text-white font-medium">
+          {currentPage > 0 && currentPage <= extractedPages.length
+            ? `Page ${currentPage} of ${extractedPages.length}`
+            : "Cover Page"}
+        </span>
 
-  // -- Summary logic with DB sync --
-  const fetchSummary = async (text, pageNumber) => {
-    if (!text || summaries[pageNumber] || !bookId) return;
+        <button
+          onClick={goNext}
+          disabled={currentPage === totalPages - 1}
+          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          <i className="fa-solid fa-chevron-right cursor-pointer"></i>
+        </button>
+      </div>
 
-    try {
-      // Get summary from AI
-      const summaryResponse = await fetch("http://localhost:3000/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      const summaryData = await summaryResponse.json();
-
-      if (summaryData.success) {
-        // Update local state
-        setSummaries((prev) => ({ ...prev, [pageNumber]: summaryData.summary }));
-
-        // Update database
-        await fetch(`http://localhost:3000/api/books/${bookId}/page/${pageNumber}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ summary: summaryData.summary }),
-        });
-      }
-    } catch (error) {
-      console.error("Summary error:", error);
-    }
-  };
-
-  // -- Pre-fetch first page summary --
-  useEffect(() => {
-    if (book?.pages?.[0]?.text && !summaries[1]) {
-      fetchSummary(book.pages[0].text, 1);
-      }
-    }, [book, summaries]);
-
-  // -- Flip handler --
-  const handleFlip = (flipData) => {
-    const physicalPage = flipData.data;
-    let logicalPage = physicalPage > 0 ? Math.ceil(physicalPage / 2) : 0;
-
-    // Stop audio
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-    setPlayingType(null);
-    setAudioStatus("stopped");
-    setLoadingType(null);
-
-    setCurrentPage(logicalPage);
-
-    // Pre-fetch adjacent pages
-    [logicalPage, logicalPage + 1].forEach((p) => {
-      const pageData = book?.pages?.[p - 1];
-      if (pageData?.text && !summaries[p]) {
-        fetchSummary(pageData.text, p);
-      }
-    });
-  };
-
-  // -- Audio handling (no DB sync) --
-  const handleAudio = async (text, type) => {
-    if (!text) return;
-
-    if (playingType === type) {
-      if (audioStatus === "playing") {
-        audioRef.current.pause();
-        setAudioStatus("paused");
-      } else if (audioStatus === "paused") {
-        audioRef.current.play();
-        setAudioStatus("playing");
-      } else {
-        await fetchAndPlayAudio(text, type);
-      }
-    } else {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setAudioStatus("stopped");
-      setPlayingType(type);
-      await fetchAndPlayAudio(text, type);
-    }
-  };
-
-  const fetchAndPlayAudio = async (text, type) => {
-    try {
-      setLoadingType(type);
-      const ttsResponse = await fetch("http://localhost:3000/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      const ttsData = await ttsResponse.json();
-
-      if (ttsData.success) {
-        // Play audio directly (no DB saving)
-        audioRef.current.src = `data:audio/mp3;base64,${ttsData.audioContent}`;
-        audioRef.current.play();
-        setAudioStatus("playing");
-
-        audioRef.current.onended = () => {
-          setAudioStatus("stopped");
-          setPlayingType(null);
-        };
-      }
-    } catch (error) {
-      console.error("TTS Error:", error);
-    } finally {
-      setLoadingType(null);
-    }
-  };
-
-  // -- Bookmark navigation --
-  const goToBookmark = (pageNumber) => {
-    const physicalPage = pageNumber * 2 - 1;
-    pageFlipRef.current?.pageFlip().flip(physicalPage);
-  };
-
-  if (loading) {
-    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Loading...</div>;
-  }
-
-  if (!book) {
-    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Book not found</div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-950">
-      {/* Metadata Editing Section */}
-      <div className="w-full max-w-4xl mx-auto p-4 bg-white/10 backdrop-blur-sm rounded-lg mb-8">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white">{book.title}</h2>
-          <button
-            onClick={() => setIsModalOpen(true)} // Open modal on button click
-            className="p-2 hover:bg-white/10 rounded-full"
-          >
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0zM3 19v-8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Edit Modal */}
-      <EditModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialTitle={book.title}
-        initialCover={book.coverPage}
-        initialEndCover={book.endCoverPage}
-        onSave={handleSaveMetadata} // Pass the save handler
-      />
-
-      {/* Book Component */}
-      {book.pages && (
-        <div className="w-full overflow-x-hidden">
-          <Book
-            extractedPages={book.pages}
-            pageFlipRef={pageFlipRef}
-            currentPage={currentPage}
-            summaries={summaries}
-            handleAudio={handleAudio}
-            playingType={playingType}
-            audioStatus={audioStatus}
-            loadingType={loadingType}
-            bookmarks={bookmarks}
-            isCurrentPageBookmarked={isCurrentPageBookmarked}
-            toggleBookmark={toggleBookmark}
-            selectedColor={selectedColor}
-            setSelectedColor={setSelectedColor}
-            colors={colors}
-            goToBookmark={goToBookmark}
-            handleFlip={handleFlip}
-          />
-        </div>
-      )}
-    </div>
-  );
+      <style jsx>{`
+        .left-page.page {
+          border-left: 1px solid black;
+          box-shadow: ${getLeftPageBorderStyle()}; /* Apply boxShadow from function */
+          font-family: 'Courier New', Courier, monospace;
+        }
+        .right-page.page {
+          border-right: 1px solid black;
+          box-shadow: ${getRightPageBorderStyle()}; /* Apply boxShadow from function */
+          font-family: 'Courier New', Courier, monospace;
+        }
+      `}</style>
+    </div>
+  );
 };
 
-export default Home;
+export default Book;
+
+
+
+//deep seek
+import React, { useRef, useEffect, useState } from "react";
+import HTMLFlipBook from "react-pageflip";
+import TopBar from "./TopBar";
+import AudioControl from "./AudioControl";
+import EditModal from "./EditModal";
+
+
+const Book = ({
+  extractedPages,
+  pageFlipRef,
+  currentPage,
+  summaries,
+  handleAudio,
+  playingType,
+  audioStatus,
+  loadingType,
+  bookmarks,
+  isCurrentPageBookmarked,
+  toggleBookmark,
+  selectedColor,
+  setSelectedColor,
+  colors,
+  goToBookmark,
+  handleFlip,
+  bookId,
+  bookTitle,
+  bookCoverPage,
+  bookEndCoverPage,
+  handleSaveMetadataFromBook
+}) => {
+  const flipSoundRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    flipSoundRef.current = new Audio("/sound/sound.mp3");
+  }, []);
+
+  if (!extractedPages) return null;
+
+  const totalPages = 2 + extractedPages.length * 2;
+
+  const goPrevious = () => {
+    pageFlipRef.current.pageFlip().flipPrev("top");
+  };
+
+  const goNext = () => {
+    pageFlipRef.current.pageFlip().flipNext("top");
+  };
+
+  // Function to generate multiple layered borders
+  const generateLayeredBorders = (index, side) => {
+    const borders = [];
+    const totalLayers = Math.min(index + 1, 5); // Max 5 layers
+    for (let i = 0; i < totalLayers; i++) {
+      const width = 1 + i;
+      const opacity = 0.3 - (i * 0.05);
+      const offset = width * 2; // Spacing between layers
+      borders.push(
+        `inset ${side === 'left' ? '-' : ''}${offset}px 0 0 rgba(0, 0, 0, ${opacity})`
+      );
+    }
+    return borders.join(', ');
+  };
+
+  return (
+    <div className="flex flex-col items-center min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-8">
+      <TopBar
+        colors={colors}
+        selectedColor={selectedColor}
+        setSelectedColor={setSelectedColor}
+        bookmarks={bookmarks}
+        goToBookmark={goToBookmark}
+      />
+
+      <div className="w-full max-w-4xl mx-auto mt-2 mb-4 p-4 flex flex-col items-center gap-2 backdrop-blur-sm bg-white/10 rounded-lg">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 text-white rounded-md text-sm"
+        >
+          Update Book Details
+        </button>
+        <h2 className="text-4xl font-bold text-white text-center bg-transparent">
+          TITTLE : {bookTitle}
+        </h2>
+      </div>
+
+      <EditModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialTitle={bookTitle}
+        initialCover={bookCoverPage}
+        initialEndCover={bookEndCoverPage}
+        onSave={handleSaveMetadataFromBook}
+      />
+
+      <HTMLFlipBook
+        width={550}
+        height={700}
+        showCover={true}
+        disableFlipByClick={true}
+        useMouseEvents={true}
+        useTouchEvents={true}
+        onFlip={(e) => {
+          if (flipSoundRef.current) {
+            flipSoundRef.current.currentTime = 0;
+            flipSoundRef.current.play().catch(console.error);
+          }
+          handleFlip(e);
+        }}
+        ref={pageFlipRef}
+      >
+        {/* Front Cover */}
+        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}></div>
+
+        {/* Content Pages */}
+        {extractedPages.flatMap((page, index) => [
+          // Left Page (Original)
+          <div
+            key={`left-${index}`}
+            className="left-page page"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              boxShadow: generateLayeredBorders(index, 'left')
+            }}
+          >
+            <div className="flex justify-between items-start p-6 pb-4">
+              <span className="text-gray-500 font-medium">
+                Page {page.pageNumber}
+              </span>
+              <AudioControl
+                text={page.text}
+                type="book"
+                handleAudio={handleAudio}
+                playingType={playingType}
+                audioStatus={audioStatus}
+                loadingType={loadingType}
+                isBookmarked={isCurrentPageBookmarked()}
+                toggleBookmark={toggleBookmark}
+              />
+            </div>
+            <div className="flex-1 overflow-auto px-6 pb-6">
+              <p className="text-gray-700 leading-relaxed text-justify text-[16px]">
+                {page.text}
+              </p>
+            </div>
+          </div>,
+
+          // Right Page (Summary)
+          <div
+            key={`right-${index}`}
+            className="right-page page"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              boxShadow: generateLayeredBorders(index, 'right')
+            }}
+          >
+            <div className="flex justify-between items-start p-6 pb-4">
+              <span className="text-blue-500 font-medium">AI Summary</span>
+              <AudioControl
+                text={summaries[page.pageNumber]}
+                type="summary"
+                handleAudio={handleAudio}
+                playingType={playingType}
+                audioStatus={audioStatus}
+                loadingType={loadingType}
+              />
+            </div>
+            <div className="flex-1 overflow-auto px-6 pb-6">
+              <p className="text-gray-700 leading-relaxed text-justify text-[16px]">
+                {summaries[page.pageNumber] || (
+                  <span className="text-gray-400">Generating summary...</span>
+                )}
+              </p>
+            </div>
+          </div>
+        ])}
+
+        {/* Back Cover */}
+        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}>
+          <div className="bg-black bg-opacity-50 p-8 rounded-lg">
+            <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
+            <p className="text-lg text-white">Continue your journey with</p>
+            <p className="text-2xl text-blue-400 font-mono mt-2">
+              Storybook AI
+            </p>
+          </div>
+        </div>
+      </HTMLFlipBook>
+
+      {/* Navigation Controls */}
+      <div className="flex items-center gap-4 mt-4">
+        <button
+          onClick={goPrevious}
+          disabled={currentPage === 0}
+          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          <i className="fa-solid fa-chevron-left cursor-pointer"></i>
+        </button>
+
+        <span className="text-white font-medium">
+          {currentPage > 0 && currentPage <= extractedPages.length
+            ? `Page ${currentPage} of ${extractedPages.length}`
+            : "Cover Page"}
+        </span>
+
+        <button
+          onClick={goNext}
+          disabled={currentPage === totalPages - 1}
+          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          <i className="fa-solid fa-chevron-right cursor-pointer"></i>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Book;
+
+/// style
+.page {
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  border-color: rgba(0, 0, 0, 0.3);
+  border-style: solid;
+  border-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left page specific styles */
+.left-page {
+  border-left-width: 3px;
+  border-right-width: 0;
+}
+
+/* Right page specific styles */
+.right-page {
+  border-right-width: 3px;
+  border-left-width: 0;
+}
