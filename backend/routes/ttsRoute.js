@@ -21,34 +21,37 @@ const router = express.Router();
 
 // Generate Speech Route
 router.post("/tts", async (req, res) => {
-    const { text } = req.body;
-  
+    const { text, voice } = req.body; // Expecting 'voice' object in the request
+
     if (!text) {
       return res.status(400).json({ success: false, message: "Text is required for speech synthesis." });
     }
-  
+
+    // Default voice if not provided
+    const selectedVoice = voice || {
+      languageCode: "en-US",
+      name: "en-US-Wavenet-J",
+      ssmlGender: "MALE",
+    };
+
     try {
       const [response] = await client.synthesizeSpeech({
         input: { text: text },
-        voice: {
-          languageCode: "en-US",
-          name: "en-US-Wavenet-J",
-          ssmlGender: "MALE",
-        },
+        voice: selectedVoice,
         audioConfig: {
           audioEncoding: "MP3",
         },
       });
-  
+
       // Convert the Buffer to Base64 string
       const audioBase64 = response.audioContent.toString("base64");
-  
+
       res.json({ success: true, audioContent: audioBase64 });
     } catch (error) {
       console.error("❌ Error generating speech:", error);
       res.status(500).json({ success: false, message: "Failed to generate speech." });
     }
   });
-  
+
 
 export default router;

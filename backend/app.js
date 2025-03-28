@@ -8,6 +8,7 @@ import uploadRoute from "./routes/uploadRoute.js";
 import aiRoute from "./routes/aiRoute.js";
 import ttsRoute from "./routes/ttsRoute.js"; 
 import bookroute from "./routes/bookRoutes.js";
+import ChatbotRoute from "./routes/Chatbot.js";
 
 dotenv.config({});
 
@@ -31,6 +32,7 @@ app.use("/api", uploadRoute);
 app.use("/api", aiRoute);
 app.use("/api", ttsRoute); 
 app.use("/", bookroute);
+app.use("/api", ChatbotRoute);
 
 connectDB();
 const PORT =3000;

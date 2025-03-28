@@ -1,6 +1,7 @@
+import { Book } from "lucide-react";
 import React from "react";
 
-const TopBar = ({ 
+const Bookmark = ({ 
   colors, 
   selectedColor, 
   setSelectedColor, 
@@ -52,4 +53,4 @@ const TopBar = ({
   );
 };
 
-export default TopBar;
+export default Bookmark;

@@ -15,6 +15,16 @@ router.post('/api/books', async (req, res) => {
   }
 });
 
+// Add to your book routes (e.g., routes/bookRoutes.js)
+router.get('/api/books', async (req, res) => {
+  try {
+    const books = await Book.find({}, 'title coverPage');
+    res.json({ success: true, books });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Update page summary (audio removed)
 router.patch('/api/books/:bookId/page/:pageNumber', async (req, res) => {
   try {

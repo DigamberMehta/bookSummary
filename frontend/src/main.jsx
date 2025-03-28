@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Home from './pages/Home'
 import { AuthProvider } from './context/authContext'
 import LandingPage from './components/LandingPage'
+import Chatbot from './components/ChatBot/chatbot'
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: '/auth',
         element: <Login />,
+      },
+      {
+        path: '/chatbot',
+        element: <Chatbot />,
       },
     ],
   },
