@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import HTMLFlipBook from "react-pageflip";
 import TopBar from "./TopBar";
 import AudioControl from "./AudioControl";
@@ -18,13 +18,31 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
 
   const totalPages = 2 + extractedPages.length * 2;
 
-  const goPrevious = () => {
+  const goPrevious = useCallback(() => {
     pageFlipRef.current.pageFlip().flipPrev("top");
-  };
+  }, [pageFlipRef]);
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     pageFlipRef.current.pageFlip().flipNext("top");
-  };
+  }, [pageFlipRef]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowLeft") {
+        goPrevious();
+      } else if (event.key === "ArrowRight") {
+        goNext();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [goPrevious, goNext]);
+
 
   // Function to create layered border lines
   const createPageLines = (side, index) => {
@@ -44,7 +62,11 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       );
     }
     return lines;
+
+
   };
+  console.log("Book Cover URL:", bookCoverPage);
+
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-8">
@@ -58,14 +80,14 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       />
 
       {/* Book Title and Update Button */}
-      <div className="w-full max-w-4xl mx-auto mt-2 mb-4 p-4 flex flex-col items-center gap-2 backdrop-blur-sm bg-white/10 rounded-lg">
+      <div className="w-full max-w-xl mx-auto mt-2 mb-4 p-2 flex flex-col items-center gap-1 backdrop-blur-sm bg-white/10 rounded-lg">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 text-white rounded-md text-sm"
+          className="px-2 py-2 text-white rounded-md text-sm"
         >
           Update Book Details
         </button>
-        <h2 className="text-4xl font-bold text-white text-center bg-transparent">
+        <h2 className="text-2xl font-bold text-white text-center bg-transparent">
           TITLE: {bookTitle}
         </h2>
       </div>
@@ -82,8 +104,8 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
 
       {/* Flipbook */}
       <HTMLFlipBook
-        width={550}
-        height={700}
+        width={500}
+        height={600}
         showCover={true}
         disableFlipByClick={true}
         useMouseEvents={true}
@@ -98,20 +120,33 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         ref={pageFlipRef}
       >
         {/* Front Cover */}
-        <div
-          className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}
-        ></div>
+        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+  {bookCoverPage ? (
+    <img 
+      src={bookCoverPage} 
+      alt="Book cover" 
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        e.target.style.display = 'none';
+        e.target.parentElement.style.background = '#f3f4f6';
+      }}
+    />
+  ) : (
+    <div className="text-gray-500">Loading cover...</div>
+  )}
+</div>
+
 
         {/* Content Pages */}
         {extractedPages.flatMap((page, index) => [
           // Left Page (Original)
           <div
             key={`left-${index}`}
-            className="left-page page"
+            className="left-page page bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             {createPageLines("left", index)}
-            <div className="page-content">
+            <div className="page-content ">
               <div className="flex justify-between items-start p-6 pb-4">
                 <span className="text-gray-500 font-medium">
                   Page {page.pageNumber}
@@ -138,11 +173,11 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           // Right Page (Summary)
           <div
             key={`right-${index}`}
-            className="right-page page"
+            className="right-page page bg-white"
             onClick={(e) => e.stopPropagation()}
           >
             {createPageLines("right", index)}
-            <div className="page-content">
+            <div className="page-content ">
               <div className="flex justify-between items-start p-6 pb-4">
                 <span className="text-blue-500 font-medium">AI Summary</span>
                 <AudioControl
@@ -166,17 +201,22 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
         ])}
 
         {/* Back Cover */}
-        <div
-          className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}
-        >
-          <div className="bg-black bg-opacity-50 p-8 rounded-lg">
-            <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
-            <p className="text-lg text-white">Continue your journey with</p>
-            <p className="text-2xl text-blue-400 font-mono mt-2">
-              Storybook AI
-            </p>
-          </div>
-        </div>
+        <div className="w-full h-full flex flex-col items-center justify-center text-center rounded-lg overflow-hidden relative">
+  {bookEndCoverPage ? (
+    <img
+      src={bookEndCoverPage}
+      alt="Back cover"
+      className="absolute inset-0 w-full h-full object-cover"
+      onError={(e) => {
+        e.target.style.display = 'none';
+        e.target.parentElement.style.background = '#f3f4f6';
+      }}
+    />
+  ) : (
+    <div className="absolute inset-0 bg-gray-100" />
+  )}
+ 
+</div>
       </HTMLFlipBook>
 
       {/* Navigation Controls */}

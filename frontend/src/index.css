@@ -69,28 +69,13 @@
 div::-webkit-scrollbar{
   display: none;
 }
-.page{
+/* .page{
   background: #f0efe9;
   font-family: "Stempel Garamond LT Pro Roman";
   font-optical-sizing: auto;
   
 }
-/* Base page styles */
-/* Page styling */
-.page {
-  position: relative;
-  overflow: visible !important;
-  background-color: white;
-}
 
-.page-content {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  background-color: inherit;
-}
-
-/* Page lines styling */
 .page-line {
   position: absolute;
   top: 0;
@@ -115,11 +100,11 @@ div::-webkit-scrollbar{
   transform: translateX(0%);
 }
 
-/* Specific page styling */
+
 .left-page {
   border-left: 3px solid rgba(0, 0, 0, 0.3);
 }
 
 .right-page {
   border-right: 3px solid rgba(0, 0, 0, 0.3);
-}
+}  */

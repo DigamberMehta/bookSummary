@@ -8,7 +8,7 @@ const TopBar = ({
   goToBookmark 
 }) => {
   return (
-    <div className="w-full bg-white/90 backdrop-blur-sm p-4 rounded-lg mb-8 shadow-lg sticky top-4 z-50">
+    <div className="w-full bg-white/90 backdrop-blur-sm p-4 rounded-lg mb-2 shadow-lg sticky top-2 z-50">
       <div className="flex flex-col gap-4">
         {/* Color Selection */}
         <div className="flex flex-wrap items-center gap-3">

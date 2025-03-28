@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PDFUpload from "./PDFUpload";
 import FeaturesSection from "./FeaturesSection";
@@ -6,10 +6,26 @@ import CarouselSection from "./CarouselSection";
 import Banner from "./Banner";
 import Header from "./Header";
 import Footer from "./Footer";
+import axios from "axios";
 
 const LandingPage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [books, setBooks] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch books from API
+    const fetchBooks = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/api/books");
+        setBooks(res.data.books);
+      } catch (error) {
+        console.error("Error fetching books:", error);
+      }
+    };
+    fetchBooks();
+  }, []);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,7 +87,7 @@ const LandingPage = () => {
       <FeaturesSection />
 
       {/* Carousel Section */}
-      <CarouselSection />
+      <CarouselSection  books={books} />
 
       {/* Footer */}
       <Footer />
