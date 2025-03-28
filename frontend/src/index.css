@@ -69,8 +69,8 @@
 div::-webkit-scrollbar{
   display: none;
 }
-/* .page{
-  background: #f0efe9;
+.page{
+  background: #f7f7f5;
   font-family: "Stempel Garamond LT Pro Roman";
   font-optical-sizing: auto;
   
@@ -107,4 +107,11 @@ div::-webkit-scrollbar{
 
 .right-page {
   border-right: 3px solid rgba(0, 0, 0, 0.3);
-}  */
+} 
+.page {
+  box-sizing: border-box;
+}
+
+.left-page {
+  border-right: 2px solid #e0e0e0;
+}

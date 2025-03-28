@@ -241,6 +241,9 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           </div>
         </HTMLFlipBook>
 
+
+
+
         {/* Navigation Controls */}
         <div className="flex items-center gap-4 mt-4">
           <button
