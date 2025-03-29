@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Book from "@/components/Book";
+import Book from "@/components/Book/Book";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -19,15 +19,26 @@ const Home = () => {
   const audioRef = useRef(new Audio());
 
   // -- Voice selection state --
-  const [selectedVoice, setSelectedVoice] = useState({ languageCode: "en-US", name: "en-US-Wavenet-J", ssmlGender: "MALE" });
+  const [selectedVoice, setSelectedVoice] = useState({
+    languageCode: "en-US",
+    name: "en-US-Wavenet-J",
+    ssmlGender: "MALE",
+  });
 
   // -- Bookmarks --
   const [bookmarks, setBookmarks] = useState([]);
   const [selectedColor, setSelectedColor] = useState("#FF6B6B");
   const colors = [
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
-    "#FFEEAD", "#D4A5A5", "#79B9C6", "#A2E1DB",
-    "#E3A3CA", "#F0E14A",
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#96CEB4",
+    "#FFEEAD",
+    "#D4A5A5",
+    "#79B9C6",
+    "#A2E1DB",
+    "#E3A3CA",
+    "#F0E14A",
   ];
 
   // -- PageFlip Ref --
@@ -37,7 +48,9 @@ const Home = () => {
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/books/${bookId}`);
+        const response = await fetch(
+          `http://localhost:3000/api/books/${bookId}`
+        );
         const data = await response.json();
 
         if (data.success) {
@@ -70,15 +83,18 @@ const Home = () => {
   // -- Save Metadata Handler --
   const handleSaveMetadata = async (metadata) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/books/${bookId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: metadata.editedTitle,
-          coverPage: metadata.editedCover,
-          endCoverPage: metadata.editedEndCover,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/books/${bookId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: metadata.editedTitle,
+            coverPage: metadata.editedCover,
+            endCoverPage: metadata.editedEndCover,
+          }),
+        }
+      );
 
       const data = await response.json();
       if (data.success) {
@@ -124,23 +140,32 @@ const Home = () => {
 
     try {
       // Get summary from AI
-      const summaryResponse = await fetch("http://localhost:3000/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
+      const summaryResponse = await fetch(
+        "http://localhost:3000/api/summarize",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        }
+      );
       const summaryData = await summaryResponse.json();
 
       if (summaryData.success) {
         // Update local state
-        setSummaries((prev) => ({ ...prev, [pageNumber]: summaryData.summary }));
+        setSummaries((prev) => ({
+          ...prev,
+          [pageNumber]: summaryData.summary,
+        }));
 
         // Update database
-        await fetch(`http://localhost:3000/api/books/${bookId}/page/${pageNumber}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ summary: summaryData.summary }),
-        });
+        await fetch(
+          `http://localhost:3000/api/books/${bookId}/page/${pageNumber}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ summary: summaryData.summary }),
+          }
+        );
       }
     } catch (error) {
       console.error("Summary error:", error);
@@ -179,8 +204,12 @@ const Home = () => {
 
   // -- Handle voice change --
   const handleVoiceChange = (event) => {
-    const [name, gender] = event.target.value.split(',');
-    setSelectedVoice({ languageCode: "en-US", name: `en-US-Wavenet-${name}`, ssmlGender: gender });
+    const [name, gender] = event.target.value.split(",");
+    setSelectedVoice({
+      languageCode: "en-US",
+      name: `en-US-Wavenet-${name}`,
+      ssmlGender: gender,
+    });
   };
 
   // -- Audio handling (no DB sync) --
@@ -241,11 +270,19 @@ const Home = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   if (!book) {
-    return <div className="min-h-screen bg-gray-950 flex items-center justify-center">Book not found</div>;
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        Book not found
+      </div>
+    );
   }
 
   return (

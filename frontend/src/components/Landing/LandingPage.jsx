@@ -1,6 +1,6 @@
 import React, { useState , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import PDFUpload from "./PDFUpload";
+import PDFUpload from "./PDFupload";
 import FeaturesSection from "./FeaturesSection";
 import CarouselSection from "./CarouselSection";
 import Banner from "./Banner";
