@@ -1,55 +1,94 @@
-import { Book } from "lucide-react";
-import React from "react";
+import { Book, Check, Palette } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
 
-const Bookmark = ({ 
-  colors, 
-  selectedColor, 
-  setSelectedColor, 
-  bookmarks, 
-  goToBookmark 
+const Bookmark = ({
+  colors,
+  selectedColor,
+  setSelectedColor,
+  bookmarks,
+  goToBookmark
 }) => {
   return (
-    <div className="w-full bg-white/90 backdrop-blur-sm p-4 rounded-lg mb-2 shadow-lg sticky top-2 z-50">
+    <Card className="w-full p-4 rounded-lg shadow-lg sticky top-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex flex-col gap-4">
-        {/* Color Selection */}
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-gray-600 font-medium">Bookmark Color:</span>
-          <div className="flex flex-wrap gap-2">
-            {colors.map((color) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className={`w-7 h-7 rounded-full border-2 transition-transform ${
-                  selectedColor === color ? "border-black scale-110" : "border-transparent"
-                } hover:scale-105`}
-                style={{ backgroundColor: color }}
-              />
-            ))}
+        {/* Color Selection Dropdown */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Book className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Bookmarks</span>
           </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Palette className="h-4 w-4" />
+                <div 
+                  className="h-4 w-4 rounded-full border"
+                  style={{ backgroundColor: selectedColor }}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48">
+              <div className="grid grid-cols-4 gap-2 p-2">
+                {colors.map((color) => (
+                  <DropdownMenuItem
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className="p-0 flex justify-center"
+                  >
+                    <div className="relative">
+                      <div
+                        className="h-8 w-8 rounded-full border-2 cursor-pointer transition-all"
+                        style={{ backgroundColor: color }}
+                      />
+                      {selectedColor === color && (
+                        <Check className="h-4 w-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Bookmarks List */}
         {bookmarks.length > 0 && (
-          <div className="border-t pt-4">
-            <div className="flex gap-3 overflow-x-auto pb-2">
+          <ScrollArea className="h-[200px]">
+            <div className="flex flex-col gap-2 pr-4">
               {bookmarks.map((bookmark, index) => (
-                <button
+                <Card
                   key={index}
+                  className="group flex items-center p-3 cursor-pointer transition-colors hover:bg-accent"
                   onClick={() => goToBookmark(bookmark.pageNumber)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow flex-shrink-0"
-                  style={{ borderLeft: `6px solid ${bookmark.color}` }}
                 >
-                  <span className="text-gray-700 font-medium">Page {bookmark.pageNumber}</span>
-                  <span className="text-gray-400 text-sm truncate max-w-[160px]">
-                    {bookmark.textSnippet}
-                  </span>
-                </button>
+                  <div
+                    className="h-full w-2 rounded-l-md mr-3"
+                    style={{ backgroundColor: bookmark.color }}
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">
+                      Page {bookmark.pageNumber}
+                    </div>
+                    <div className="text-sm text-muted-foreground line-clamp-1">
+                      {bookmark.textSnippet}
+                    </div>
+                  </div>
+                </Card>
               ))}
             </div>
-          </div>
+          </ScrollArea>
         )}
       </div>
-    </div>
+    </Card>
   );
 };
 
