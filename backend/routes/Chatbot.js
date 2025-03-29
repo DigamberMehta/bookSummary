@@ -1,73 +1,163 @@
-// pages/api/chatbot.js
-import OpenAI from 'openai';
+import express from "express";
+import OpenAI from "openai";
+import dotenv from "dotenv";
 
-// Replace with your actual ChatGPT API key
-const OPENAI_API_KEY = "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";
+dotenv.config();
 
-// Initialize OpenAI client
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const router = express.Router();
 
-// In-memory store for chat history (for demonstration purposes)
+// Replace with your actual ChatGPT API key from .env
+const openai = new OpenAI({ apiKey: "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" });
+
 const chatHistory = {};
 
-export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    const { message, currentPageText, sessionId } = req.body; // Expecting a sessionId
+// Define the chatbot route (existing)
+router.post("/chatbot", async (req, res) => {
+  const { message, currentPageText, sessionId } = req.body;
 
-    // Simple session management (you might want to use cookies or a more robust mechanism)
-    const currentSessionId = sessionId || 'default_session'; // Use provided sessionId or a default
+  if (!message || !currentPageText) {
+    return res.status(400).json({ error: "Missing message or context" });
+  }
 
-    // Initialize chat history for the session if it doesn't exist
-    if (!chatHistory[currentSessionId]) {
-      chatHistory[currentSessionId] = [];
+  const currentSessionId = sessionId || "default_session";
+
+  if (!chatHistory[currentSessionId]) {
+    chatHistory[currentSessionId] = [];
+  }
+
+  // Add user message to chat history
+  chatHistory[currentSessionId].push({ role: "user", content: message });
+
+  try {
+    const modelName = "gpt-3.5-turbo";
+
+    const messages = [
+      {
+        role: "system",
+        content: `You are a helpful chatbot assisting a user reading a book. The current page contains: "${currentPageText}". Answer the user's question based on this context and the previous conversation.`,
+      },
+      ...chatHistory[currentSessionId],
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model: modelName,
+      messages: messages,
+    });
+
+    if (!completion.choices || completion.choices.length === 0) {
+      return res.status(500).json({ error: "No response from the model" });
     }
 
-    
+    const text = completion.choices[0].message.content;
 
-    // Add the current user message to the chat history
-    chatHistory[currentSessionId].push({ role: 'user', content: message });
-    console.log("Current Page Text:", currentPageText);
+    chatHistory[currentSessionId].push({ role: "assistant", content: text });
 
-    try {
-      const modelName = 'gpt-3.5-turbo'; // Or another preferred ChatGPT model
+    res.json({ response: text });
+  } catch (error) {
+    console.error("Error processing chatbot request:", error);
+    res.status(500).json({ error: error.message || "Failed to process message" });
+  }
+});
 
-      // Construct the prompt including the current page text and the chat history
-      let prompt = `You are a helpful chatbot assisting a user reading a book. The current page contains: "${currentPageText}". Answer the user's question based on this context and the previous conversation.`;
+// New route for combining summary or discussing previous pages
+// In-memory store for chat histories (for demonstration purposes)
+const chatHistories = {};
 
-      // Add chat history to the messages array
-      const messages = [
-        { role: 'system', content: prompt }, // Initial system message
-        ...chatHistory[currentSessionId],     // Include previous messages
-      ];
+router.post("/chatbot/page-action", async (req, res) => {
+  const { actionType, pageRange, summaries, messages, currentPage, extractedPages } = req.body;
+
+  // Simple way to get a user identifier (replace with your actual user identification logic)
+  const userId = req.sessionID || 'anonymous';
+
+  if (!actionType) {
+    return res.status(400).json({ error: "Missing action type" });
+  }
+
+  try {
+    if (actionType === "combine" && summaries) {
+      // Combine summaries
+      const combinedSummary = Object.values(summaries).filter(summary => summary).join("\n\n");
+      res.json({ response: combinedSummary });
+    } else if (actionType === "discuss" && pageRange && summaries) {
+      // Discuss previous pages
+      const [startPage, endPage] = pageRange.split("-").map(Number);
+      if (isNaN(startPage) || isNaN(endPage) || startPage > endPage) {
+        return res.status(400).json({ error: "Invalid page range" });
+      }
+
+      const relevantSummaries = Object.entries(summaries)
+        .filter(([pageNumber, summary]) => {
+          const pageNum = parseInt(pageNumber);
+          return pageNum >= startPage && pageNum <= endPage && summary;
+        })
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Sort by page number
+        .map(([pageNumber, summary]) => `Page ${pageNumber}: ${summary}`)
+        .join("\n\n");
+
+      if (!relevantSummaries) {
+        return res.json({ response: "No summaries available for the specified range." });
+      }
+
+      const modelName = "gpt-3.5-turbo";
+      const prompt = `The user wants to discuss pages ${startPage} to ${endPage}. Here are the summaries:\n\n${relevantSummaries}\n\nWhat are some potential discussion points or key takeaways?`;
 
       const completion = await openai.chat.completions.create({
         model: modelName,
-        messages: messages,
+        messages: [{ role: "user", content: prompt }],
       });
 
+      if (!completion.choices || completion.choices.length === 0) {
+        return res.status(500).json({ error: "No response from the model" });
+      }
+
+      const discussionResponse = completion.choices[0].message.content;
+      res.json({ response: discussionResponse });
+    } else if (actionType === "chat" && messages && summaries && currentPage && extractedPages) {
+      // Handle chat requests with history
+      const modelName = "gpt-3.5-turbo";
+
+      // Initialize chat history for the user if it doesn't exist
+      if (!chatHistories[userId]) {
+        chatHistories[userId] = [];
+      }
+
+      // Add the user's message to the history
+      if (messages && messages.length > 0) {
+        const latestUserMessage = messages[messages.length - 1];
+        chatHistories[userId].push({ role: "user", content: latestUserMessage.text });
+      }
+
+      // Construct the prompt with the latest history
+      let promptMessages = [...chatHistories[userId]];
+
+      // Add context about the current page (optional, can be included in the prompt)
+      const currentPageNumber = Math.ceil(currentPage / 2);
+      const currentSummary = summaries[currentPageNumber] || "No summary available for the current page.";
+      const currentPageText = extractedPages.find(page => page.pageNumber === currentPageNumber)?.text || "No content available for the current page.";
+
+      promptMessages.push({ role: "system", content: `You are a helpful chatbot assisting a user reading a book. The current page number is ${currentPageNumber}. Here's the summary of the current page: ${currentSummary}. Here's the content of the current page (if available): ${currentPageText}` });
+
+      const completion = await openai.chat.completions.create({
+        model: modelName,
+        messages: promptMessages,
+      });
 
       if (!completion.choices || completion.choices.length === 0) {
-        console.error("API returned no choices:", completion);
-        return res.status(500).json({ error: 'No response from the model' });
+        return res.status(500).json({ error: "No response from the model" });
       }
 
+      const chatResponse = completion.choices[0].message.content;
 
-      const text = completion.choices[0].message.content;
+      // Add the chatbot's response to the history
+      chatHistories[userId].push({ role: "assistant", content: chatResponse });
 
-      if (text) {
-        // Add the chatbot's response to the chat history
-        chatHistory[currentSessionId].push({ role: 'assistant', content: text });
-        return res.status(200).json({ response: text });
-      } else {
-        console.error("No valid text found in response:", completion);
-        return res.status(500).json({ error: 'Empty response from the model' });
-      }
-    } catch (error) {
-      console.error('Error processing chatbot request:', error);
-      return res.status(500).json({ error: error.message || 'Failed to process message' });
+      res.json({ response: chatResponse });
+    } else {
+      return res.status(400).json({ error: "Invalid action type or missing required parameters" });
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  } catch (error) {
+    console.error("Error processing page action request:", error);
+    res.status(500).json({ error: error.message || "Failed to process page action" });
   }
-}
+});
+export default router;

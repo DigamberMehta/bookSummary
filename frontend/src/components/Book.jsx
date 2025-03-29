@@ -6,12 +6,14 @@ import AudioControl from "./AudioControl";
 import EditModal from "./EditModal";
 import Sidebar from "./Sidebar";
 import Chatbot from "./ChatBot/Chatbot"; // Import the Chatbot component
+import SummaryFeatures from "./SummaryFeatures"; // Import the new component
 
 const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook, selectedVoice, handleVoiceChange,
 }) => {
   const flipSoundRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentVisiblePageText, setCurrentVisiblePageText] = useState('');
+  const [pagesReadCounter, setPagesReadCounter] = useState(0); // To track pages read in Book component
 
   useEffect(() => {
     flipSoundRef.current = new Audio("/sound/sound.mp3");
@@ -59,18 +61,23 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
     let currentPageTextContent = '';
     const currentPageNumber = e.data;
 
-    console.log("Current Page Number:", currentPageNumber);
+    // console.log("Current Page Number:", currentPageNumber);
 
     // Handle original content pages (odd numbers)
     if (currentPageNumber % 2 === 1) { // Check for odd pages
       const contentPageIndex = Math.floor((currentPageNumber - 1) / 2);
       if (contentPageIndex >= 0 && contentPageIndex < extractedPages.length) {
         currentPageTextContent = extractedPages[contentPageIndex].text;
+        setPagesReadCounter((prev) => prev + 1); // Increment the counter in Book
       }
     }
 
     setCurrentVisiblePageText(currentPageTextContent);
-    console.log(`Page Number: ${currentPageNumber}, Current Visible Page Text:`, currentPageTextContent);
+    // console.log(`Page Number: ${currentPageNumber}, Current Visible Page Text:`, currentPageTextContent);
+  };
+
+  const resetPagesReadCounter = () => {
+    setPagesReadCounter(0);
   };
 
   // Function to create layered border lines (remains the same)
@@ -241,8 +248,14 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           </div>
         </HTMLFlipBook>
 
-
-
+        {/* Summary Features Component */}
+        <SummaryFeatures
+          currentPage={currentPage}
+          summaries={summaries}
+          extractedPages={extractedPages}
+          pagesReadCounter={pagesReadCounter} // Pass the counter
+          onResetPagesRead={resetPagesReadCounter} // Pass the reset function
+        />
 
         {/* Navigation Controls */}
         <div className="flex items-center gap-4 mt-4">
