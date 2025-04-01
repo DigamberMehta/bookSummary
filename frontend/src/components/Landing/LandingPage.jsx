@@ -18,7 +18,7 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/books");
+        const res = await axios.get("https://booksummary.onrender.com/api/books");
         setBooks(res.data.books);
       } catch (error) {
         console.error("Error fetching books:", error);

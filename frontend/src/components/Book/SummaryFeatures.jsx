@@ -43,7 +43,7 @@ const SummaryFeatures = ({ currentPage, summaries, extractedPages, pagesReadCoun
   const handleApiRequest = useCallback(async (requestBody, successCallback, failureCallback) => {
     setIsSummaryLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/api/chatbot/page-action", {
+      const response = await fetch("https://booksummary.onrender.com/api/chatbot/page-action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
