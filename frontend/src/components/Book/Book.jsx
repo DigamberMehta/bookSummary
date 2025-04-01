@@ -6,6 +6,7 @@ import AudioControl from "./AudioControl";
 import EditModal from "./EditModal";
 import Chatbot from "../ChatBot/Chatbot";
 import BookControls from "./BookControls";
+import DictionaryWidget from "./DictionaryWidget";  
 
 const debounce = (func, delay) => {
   let timeout;
@@ -15,30 +16,7 @@ const debounce = (func, delay) => {
   };
 };
 
-const Book = ({
-  extractedPages,
-  pageFlipRef,
-  currentPage,
-  summaries,
-  handleAudio,
-  playingType,
-  audioStatus,
-  loadingType,
-  bookmarks,
-  isCurrentPageBookmarked,
-  toggleBookmark,
-  selectedColor,
-  setSelectedColor,
-  colors,
-  goToBookmark,
-  handleFlip,
-  bookId,
-  bookTitle,
-  bookCoverPage,
-  bookEndCoverPage,
-  handleSaveMetadataFromBook,
-  selectedVoice,
-  handleVoiceChange,
+const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook, selectedVoice, handleVoiceChange,
 }) => {
   const flipSoundRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,6 +47,7 @@ const Book = ({
   const [totalWordsRead, setTotalWordsRead] = useState(0);
   const [totalTimeSpentReading, setTotalTimeSpentReading] = useState(0);
   const [readingSpeed, setReadingSpeed] = useState(0);
+  const [isDictionaryOpen, setIsDictionaryOpen] = useState(false); // State to control dictionary visibility
 
   const totalDynamicPages = dynamicPages.length;
   const progressPercentage =
@@ -395,10 +374,35 @@ const Book = ({
     setSelectedTranslationLanguage(languageCode);
   };
 
+  const toggleDictionary = () => {
+    setIsDictionaryOpen(!isDictionaryOpen);
+  };
+
   if (!pagesToDisplay) return null;
 
   return (
     <div className="flex min-h-screen bg-[url(https://unblast.com/wp-content/uploads/2020/05/Light-Wood-Background-Texture.jpg)] p-4 relative">
+ 
+    <div className="fixed bottom-4 left-4 z-[9999]">
+      <button
+        onClick={toggleDictionary}
+        className="bg-black text-white font-bold py-2 px-4 rounded-[50%] shadow-md cursor-pointer"
+        title="Toggle Dictionary"
+      >
+        <span style={{ fontSize: '1.5em' }}>
+          <i className="fa-solid fa-book"></i>
+        </span>
+      </button>
+
+      {isDictionaryOpen && (
+        <div
+          className="absolute bottom-[calc(100%+0.75rem)] left-0 w-[400px] shadow-lg rounded-lg bg-white overflow-hidden z-[9999]"
+        >
+          <DictionaryWidget />
+        </div>
+      )}
+    </div>
+
       <div className="flex flex-col items-center flex-grow p-3">
         <Header
           colors={colors}
@@ -448,6 +452,7 @@ const Book = ({
           onFlip={handlePageChange}
           ref={pageFlipRef}
         >
+         
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             {bookCoverPage ? (
               <img
@@ -544,6 +549,7 @@ const Book = ({
         />
       </div>
 
+      {/* Chatbot remains on the right */}
       <Chatbot currentPageText={currentVisiblePageText} selectedTranslationLanguage={selectedTranslationLanguage} fetchTranslatedText={fetchTranslatedText} />
     </div>
   );
