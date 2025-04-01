@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const teamMembers = [
   { name: "Digamber Singh Mehta", regNo: "12323103" },
   { name: "Srishti", regNo: "12313585" },
-  { name: "Taiba Siraj", regNo: "12312313" },
+  { name: "Taiba Siraj", regNo: "12312931" },
 ];
 
 export default function TeamSection() {

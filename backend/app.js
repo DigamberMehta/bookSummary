@@ -9,6 +9,7 @@ import aiRoute from "./routes/aiRoute.js";
 import ttsRoute from "./routes/ttsRoute.js"; 
 import bookroute from "./routes/bookRoutes.js";
 import ChatbotRoute from "./routes/Chatbot.js";
+import translationRoutes from "./routes/translationRoutes.js";
 
 dotenv.config({});
 
@@ -33,6 +34,7 @@ app.use("/api", aiRoute);
 app.use("/api", ttsRoute); 
 app.use("/", bookroute);
 app.use("/api", ChatbotRoute);
+app.use("/api", translationRoutes);
 
 connectDB();
 const PORT =3000;
