@@ -94,7 +94,7 @@ function Chatbot({ currentPageText }) {
     <>
       <button
         onClick={toggleChatbot}
-        className="fixed bottom-4 right-4 inline-flex items-center justify-center text-sm font-medium disabled:pointer-events-none disabled:opacity-50 border rounded-full w-16 h-16 bg-white m-0 cursor-pointer border-gray-200 bg-none p-0 normal-case leading-5 hover:text-white"
+        className="fixed bottom-4 right-4 inline-flex items-center justify-center text-sm font-medium disabled:pointer-events-none disabled:opacity-50 border rounded-full w-16 h-16 bg-black m-0 cursor-pointer border-gray-200 bg-none p-0 normal-case leading-5 hover:text-black"
         type="button"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -110,7 +110,7 @@ function Chatbot({ currentPageText }) {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-black block border-gray-200 align-middle"
+          className="text-white block border-gray-200 align-middle"
         >
           <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" className="border-gray-200" />
         </svg>

@@ -1,315 +1,447 @@
-// components/Book.jsx
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import HTMLFlipBook from "react-pageflip";
-import Bookmark from "./Bookmark";
+import Header from "./Header";
 import AudioControl from "./AudioControl";
 import EditModal from "./EditModal";
-import Sidebar from "./Sidebar";
 import Chatbot from "../ChatBot/Chatbot";
+import BookControls from "./BookControls";
+
+const debounce = (func, delay) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), delay);
+  };
+};
 
 const Book = ({
-  extractedPages,
-  pageFlipRef,
-  currentPage,
-  summaries,
-  handleAudio,
-  playingType,
-  audioStatus,
-  loadingType,
-  bookmarks,
-  isCurrentPageBookmarked,
-  toggleBookmark,
-  selectedColor,
-  setSelectedColor,
-  colors,
-  goToBookmark,
-  handleFlip,
-  bookId,
-  bookTitle,
-  bookCoverPage,
-  bookEndCoverPage,
-  handleSaveMetadataFromBook,
-  selectedVoice,
-  handleVoiceChange,
+  extractedPages,
+  pageFlipRef,
+  currentPage,
+  summaries,
+  handleAudio,
+  playingType,
+  audioStatus,
+  loadingType,
+  bookmarks,
+  isCurrentPageBookmarked,
+  toggleBookmark,
+  selectedColor,
+  setSelectedColor,
+  colors,
+  goToBookmark,
+  handleFlip,
+  bookId,
+  bookTitle,
+  bookCoverPage,
+  bookEndCoverPage,
+  handleSaveMetadataFromBook,
+  selectedVoice,
+  handleVoiceChange,
 }) => {
-  const flipSoundRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentVisiblePageText, setCurrentVisiblePageText] = useState("");
-  const [pagesReadCounter, setPagesReadCounter] = useState(0);
-  const [readPages, setReadPages] = useState(new Set());
+  const flipSoundRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentVisiblePageText, setCurrentVisiblePageText] = useState("");
+  const [pagesReadCounter, setPagesReadCounter] = useState(0);
+  const [readPages, setReadPages] = useState(new Set());
+  const [dynamicPages, setDynamicPages] = useState([]);
+  const [fontSize, setFontSize] = useState("medium");
+  const [customFontSize, setCustomFontSize] = useState(14);
+  const [pendingCustomFontSize, setPendingCustomFontSize] = useState(14);
+  const [lastFlippedPage, setLastFlippedPage] = useState(0);
+  const [isPageRestored, setIsPageRestored] = useState(false); // Flag to track restoration
+  const [goToPageNumber, setGoToPageNumber] = useState("");
 
-  // Progress calculation
-  const progressPercentage =
-    extractedPages.length > 0
-      ? Math.round((pagesReadCounter / extractedPages.length) * 100)
-      : 0;
+  // Reading speed logic
+  const [pageStartTime, setPageStartTime] = useState(null);
+  const [wordsOnCurrentPage, setWordsOnCurrentPage] = useState(0);
+  const [totalWordsRead, setTotalWordsRead] = useState(0);
+  const [totalTimeSpentReading, setTotalTimeSpentReading] = useState(0);
+  const [readingSpeed, setReadingSpeed] = useState(0);
 
-  useEffect(() => {
-    flipSoundRef.current = new Audio("/sound/sound.mp3");
-    if (extractedPages?.length > 0) {
-      setCurrentVisiblePageText(extractedPages[0].text);
-    }
-  }, [extractedPages]);
+  const totalDynamicPages = dynamicPages.length;
+  const progressPercentage =
+    totalDynamicPages > 0
+      ? Math.round((pagesReadCounter / totalDynamicPages) * 100)
+      : 0;
 
-  useEffect(() => {
-    const storedPagesRead = localStorage.getItem(`book-${bookId}-pagesRead`);
-    const storedReadPages = localStorage.getItem(`book-${bookId}-readPages`);
+  const getFontSizeStyle = () => {
+    switch (fontSize) {
+      case "small": return { fontSize: "12px" };
+      case "medium": return { fontSize: "14px" };
+      case "large": return { fontSize: "16px" };
+      case "extra-large": return { fontSize: "18px" };
+      case "custom": return { fontSize: `${customFontSize}px` };
+      default: return { fontSize: "14px" };
+    }
+  };
 
-    if (storedPagesRead) setPagesReadCounter(parseInt(storedPagesRead, 10));
-    if (storedReadPages) setReadPages(new Set(JSON.parse(storedReadPages)));
-  }, [bookId]);
+  const splitTextIntoPages = (text, maxHeight, originalPageNumber) => {
+    const words = text.split(" ");
+    let currentText = "";
+    const pages = [];
+    let isFirstPart = true;
 
-  useEffect(() => {
-    localStorage.setItem(`book-${bookId}-pagesRead`, pagesReadCounter);
-    localStorage.setItem(
-      `book-${bookId}-readPages`,
-      JSON.stringify(Array.from(readPages))
-    );
-  }, [pagesReadCounter, readPages, bookId]);
+    const measureElement = document.createElement("div");
+    measureElement.style.width = "460px";
+    measureElement.style.padding = "0 20px";
+    measureElement.style.fontSize = getFontSizeStyle().fontSize;
+    measureElement.style.lineHeight = "1.5";
+    measureElement.style.position = "absolute";
+    measureElement.style.visibility = "hidden";
+    document.body.appendChild(measureElement);
 
-  const goPrevious = useCallback(
-    () => pageFlipRef.current.pageFlip().flipPrev("top"),
-    [pageFlipRef]
-  );
-  const goNext = useCallback(
-    () => pageFlipRef.current.pageFlip().flipNext("top"),
-    [pageFlipRef]
-  );
+    words.forEach((word) => {
+      const tempText = currentText + word + " ";
+      measureElement.innerText = tempText;
+      const height = measureElement.offsetHeight;
 
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "ArrowLeft") goPrevious();
-      if (event.key === "ArrowRight") goNext();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [goPrevious, goNext]);
+      if (height > maxHeight) {
+        pages.push({
+          text: currentText.trim(),
+          displayPageNumber: isFirstPart
+            ? `Page ${originalPageNumber}`
+            : `Page ${originalPageNumber} (cont.)`,
+          originalPageNumber,
+        });
+        currentText = word + " ";
+        isFirstPart = false;
+      } else {
+        currentText = tempText;
+      }
+    });
 
-  const handlePageChange = (e) => {
-    handleFlip(e);
-    const currentPageNumber = e.data;
+    document.body.removeChild(measureElement);
 
-    if (currentPageNumber % 2 === 1) {
-      const contentPageIndex = Math.floor((currentPageNumber - 1) / 2);
-      if (contentPageIndex >= 0 && contentPageIndex < extractedPages.length) {
-        const pageNumber = extractedPages[contentPageIndex].pageNumber;
-        setCurrentVisiblePageText(extractedPages[contentPageIndex].text);
+    if (currentText) {
+      pages.push({
+        text: currentText.trim(),
+        displayPageNumber: isFirstPart
+          ? `Page ${originalPageNumber}`
+          : `Page ${originalPageNumber} (cont.)`,
+        originalPageNumber,
+      });
+    }
 
-        if (!readPages.has(pageNumber)) {
-          setPagesReadCounter((prev) => prev + 1);
-          setReadPages((prev) => new Set([...prev, pageNumber]));
-        }
-      }
-    }
-  };
+    return pages;
+  };
 
-  const resetProgress = () => {
-    setPagesReadCounter(0);
-    setReadPages(new Set());
-  };
+  const debouncedSetCustomFontSize = useCallback(
+    debounce((value) => {
+      setCustomFontSize(value);
+      setFontSize("custom");
+    }, 500),
+    []
+  );
 
-  const createPageLines = (side, index) => {
-    return Array.from({ length: Math.min(index + 1, 5) }).map((_, i) => (
-      <div
-        key={`${side}-line-${i}`}
-        className={`page-line ${side}-line`}
-        style={{
-          [side]: `${(i + 1) * 3}px`,
-          opacity: 1 - i * 0.2,
-          zIndex: -i,
-        }}
-      />
-    ));
-  };
+  useEffect(() => {
+    const maxTextHeight = 500;
+    const newDynamicPages = extractedPages.flatMap((page) =>
+      splitTextIntoPages(page.text, maxTextHeight, page.pageNumber)
+    );
+    setDynamicPages(newDynamicPages);
+    setIsPageRestored(false); // Reset restoration flag when pages change
+  }, [extractedPages, fontSize, customFontSize]);
 
-  if (!extractedPages) return null;
+  // Restore page after DOM is updated
+  useEffect(() => {
+    if (
+      pageFlipRef.current &&
+      dynamicPages.length > 0 &&
+      lastFlippedPage > 0 &&
+      !isPageRestored
+    ) {
+      // Use a slight delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        try {
+          pageFlipRef.current.pageFlip().flip(lastFlippedPage, "top");
+          setIsPageRestored(true); // Mark as restored
+        } catch (error) {
+          console.error("Failed to restore page:", error);
+        }
+      }, 50); // Small delay to allow rendering
+      return () => clearTimeout(timer);
+    }
+  }, [dynamicPages, lastFlippedPage, isPageRestored]);
 
-  return (
-    <div className="flex min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-4 relative">
-      <Sidebar
-        selectedVoice={selectedVoice}
-        handleVoiceChange={handleVoiceChange}
-      />
+  useEffect(() => {
+    flipSoundRef.current = new Audio("/sound/sound.mp3");
+    if (dynamicPages.length > 0) {
+      setCurrentVisiblePageText(dynamicPages[0].text);
+    }
+  }, [dynamicPages]);
 
-      <div className="flex flex-col items-center flex-grow p-8">
-        <Bookmark
-          colors={colors}
-          selectedColor={selectedColor}
-          setSelectedColor={setSelectedColor}
-          bookmarks={bookmarks}
-          goToBookmark={goToBookmark}
-        />
+  useEffect(() => {
+    const storedPagesRead = localStorage.getItem(`book-${bookId}-pagesRead`);
+    const storedReadPages = localStorage.getItem(`book-${bookId}-readPages`);
+    const storedFontSize = localStorage.getItem(`book-${bookId}-fontSize`);
+    const storedCustomFontSize = localStorage.getItem(`book-${bookId}-customFontSize`);
 
-        {/* Progress Header */}
-        <div className="w-full max-w-4xl mx-auto mb-6 space-y-4">
-          <div className="backdrop-blur-sm bg-white/10 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-bold text-white">{bookTitle}</h2>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Edit Book
-              </button>
-            </div>
+    if (storedPagesRead) setPagesReadCounter(parseInt(storedPagesRead, 10));
+    if (storedReadPages) setReadPages(new Set(JSON.parse(storedReadPages)));
+    if (storedFontSize) setFontSize(storedFontSize);
+    if (storedCustomFontSize) setCustomFontSize(parseInt(storedCustomFontSize, 10));
+  }, [bookId]);
 
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-white">
-                <span>
-                  Progress: {pagesReadCounter}/{extractedPages.length} pages
-                </span>
-                <span>{progressPercentage}% Complete</span>
-              </div>
-              <div className="relative pt-1">
-                <div className="overflow-hidden h-4 bg-gray-200/50 rounded-full">
-                  <div
-                    className="h-4 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                </div>
-                <div className="absolute top-0 right-0">
-                  <button
-                    onClick={resetProgress}
-                    className="text-xs text-white hover:text-gray-200 transition-colors"
-                    title="Reset progress"
-                  >
-                    ⟳
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+  useEffect(() => {
+    localStorage.setItem(`book-${bookId}-pagesRead`, pagesReadCounter);
+    localStorage.setItem(`book-${bookId}-readPages`, JSON.stringify(Array.from(readPages)));
+    localStorage.setItem(`book-${bookId}-fontSize`, fontSize);
+    if (fontSize === "custom") {
+      localStorage.setItem(`book-${bookId}-customFontSize`, customFontSize.toString());
+    } else {
+      localStorage.removeItem(`book-${bookId}-customFontSize`);
+    }
+  }, [pagesReadCounter, readPages, bookId, fontSize, customFontSize]);
 
-        <EditModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          initialTitle={bookTitle}
-          initialCover={bookCoverPage}
-          initialEndCover={bookEndCoverPage}
-          onSave={handleSaveMetadataFromBook}
-        />
+  const goPrevious = useCallback(() => pageFlipRef.current.pageFlip().flipPrev("top"), [pageFlipRef]);
+  const goNext = useCallback(() => pageFlipRef.current.pageFlip().flipNext("top"), [pageFlipRef]);
 
-        <HTMLFlipBook
-          width={500}
-          height={600}
-          showCover={true}
-          disableFlipByClick={true}
-          useMouseEvents={true}
-          useTouchEvents={true}
-          onFlip={handlePageChange}
-          ref={pageFlipRef}
-        >
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-            {bookCoverPage ? (
-              <img
-                src={bookCoverPage}
-                alt="Book cover"
-                className="w-full h-full object-cover"
-                onError={(e) =>
-                  (e.target.parentElement.style.background = "#f3f4f6")
-                }
-              />
-            ) : (
-              <div className="text-gray-500">Loading cover...</div>
-            )}
-          </div>
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "ArrowLeft") goPrevious();
+      if (event.key === "ArrowRight") goNext();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [goPrevious, goNext]);
 
-          {extractedPages.flatMap((page, index) => [
-            <div key={`left-${index}`} className="left-page page bg-white">
-              {createPageLines("left", index)}
-              <div className="page-content">
-                <div className="flex justify-between items-start p-6 pb-4">
-                  <span className="text-gray-500 font-medium">
-                    Page {page.pageNumber}
-                  </span>
-                  <AudioControl
-                    text={page.text}
-                    type="book"
-                    handleAudio={handleAudio}
-                    playingType={playingType}
-                    audioStatus={audioStatus}
-                    loadingType={loadingType}
-                    isBookmarked={isCurrentPageBookmarked()}
-                    toggleBookmark={toggleBookmark}
-                  />
-                </div>
-                <div className="px-6 pb-6">
-                  <p className="text-gray-700 text-justify text-sm leading-relaxed">
-                    {page.text}
-                  </p>
-                </div>
-              </div>
-            </div>,
-            <div key={`right-${index}`} className="right-page page bg-white">
-              {createPageLines("right", index)}
-              <div className="page-content">
-                <div className="flex justify-between items-start p-6 pb-4">
-                  <span className="text-blue-500 font-medium">AI Summary</span>
-                  <AudioControl
-                    text={summaries[page.pageNumber]}
-                    type="summary"
-                    handleAudio={handleAudio}
-                    playingType={playingType}
-                    audioStatus={audioStatus}
-                    loadingType={loadingType}
-                  />
-                </div>
-                <div className="px-6 pb-6">
-                  <p className="text-gray-700 text-justify text-sm leading-relaxed">
-                    {summaries[page.pageNumber] || (
-                      <span className="text-gray-400">
-                        Generating summary...
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>,
-          ])}
+  useEffect(() => {
+    if (currentVisiblePageText) {
+      setWordsOnCurrentPage(currentVisiblePageText.split(/\s+/).filter(Boolean).length);
+      setPageStartTime(Date.now());
+    }
+  }, [currentVisiblePageText]);
 
-          <div className="w-full h-full flex flex-col items-center justify-center text-center rounded-lg overflow-hidden relative">
-            {bookEndCoverPage ? (
-              <img
-                src={bookEndCoverPage}
-                alt="Back cover"
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={(e) =>
-                  (e.target.parentElement.style.background = "#f3f4f6")
-                }
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gray-100" />
-            )}
-          </div>
-        </HTMLFlipBook>
+  const handlePageChange = (e) => {
+    handleFlip(e);
+    const currentPageNumber = e.data;
+    setLastFlippedPage(currentPageNumber);
+    setIsPageRestored(true); // Mark as restored when user flips manually
 
-        <div className="flex items-center gap-4 mt-6">
-          <button
-            onClick={goPrevious}
-            disabled={currentPage === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-          >
-            ←
-          </button>
+    if (pageStartTime && wordsOnCurrentPage > 0) {
+      const timeSpentOnPage = Date.now() - pageStartTime;
+      setTotalTimeSpentReading((prev) => prev + timeSpentOnPage);
+      setTotalWordsRead((prev) => prev + wordsOnCurrentPage);
 
-          <div className="text-white font-medium min-w-[120px] text-center">
-            {currentPage > 0 ? `Page ${currentPage}` : "Cover Page"}
-          </div>
+      const totalMinutes = totalTimeSpentReading / (1000 * 60);
+      const wordsPerMinute = totalMinutes > 0 ? Math.round(totalWordsRead / totalMinutes) : 0;
+      setReadingSpeed(wordsPerMinute);
+    }
 
-          <button
-            onClick={goNext}
-            disabled={currentPage === 2 + extractedPages.length * 2 - 1}
-            className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
-          >
-            →
-          </button>
-        </div>
-      </div>
+    if (currentPageNumber % 2 === 1) {
+      const contentPageIndex = Math.floor((currentPageNumber - 1) / 2);
+      if (contentPageIndex >= 0 && contentPageIndex < dynamicPages.length) {
+        const page = dynamicPages[contentPageIndex];
+        setCurrentVisiblePageText(page.text);
 
-      <Chatbot currentPageText={currentVisiblePageText} />
-    </div>
-  );
+        if (!readPages.has(page.displayPageNumber)) {
+          setPagesReadCounter((prev) => prev + 1);
+          setReadPages((prev) => new Set([...prev, page.displayPageNumber]));
+        }
+      }
+    }
+    setPageStartTime(Date.now()); // Reset start time for the new page
+  };
+
+  const resetProgress = () => {
+    setPagesReadCounter(0);
+    setReadPages(new Set());
+    setTotalWordsRead(0);
+    setTotalTimeSpentReading(0);
+    setReadingSpeed(0);
+  };
+
+  const createPageLines = (side, index) => {
+    return Array.from({ length: Math.min(index + 1, 5) }).map((_, i) => (
+      <div
+        key={`${side}-line-${i}`}
+        className={`page-line ${side}-line`}
+        style={{ [side]: `${(i + 1) * 3}px`, opacity: 1 - i * 0.2, zIndex: -i }}
+      />
+    ));
+  };
+
+  const handleGoToPageInputChange = (event) => {
+    setGoToPageNumber(event.target.value);
+  };
+
+  const handleGoToPage = () => {
+    const pageNumber = parseInt(goToPageNumber, 10);
+    if (!isNaN(pageNumber) && pageNumber > 0) {
+      // Find the index of the first dynamic page with the matching originalPageNumber
+      const targetDynamicPageIndex = dynamicPages.findIndex(
+        (page) => page.originalPageNumber === pageNumber
+      );
+
+      if (targetDynamicPageIndex !== -1) {
+        // Calculate the flipbook page number (content page is always odd, after the cover)
+        const targetFlipPage = targetDynamicPageIndex * 2 + 1 + 1; // +1 to account for the cover page
+
+        // The pageNum in turnToPage seems to be 1-based index of the flipbook
+        if (pageFlipRef.current && pageFlipRef.current.pageFlip() && typeof pageFlipRef.current.pageFlip().turnToPage === 'function') {
+          pageFlipRef.current.pageFlip().turnToPage(targetFlipPage);
+        } else {
+          console.error("pageFlipRef or its methods are not available.");
+          alert("Navigation failed. Please try again.");
+        }
+      } else {
+        alert(`Page ${pageNumber} not found.`);
+      }
+    } else {
+      alert("Please enter a valid page number.");
+    }
+    setGoToPageNumber(""); // Clear the input after navigating
+  };
+
+  if (!dynamicPages) return null;
+
+  return (
+    <div className="flex min-h-screen bg-[url(https://unblast.com/wp-content/uploads/2020/05/Light-Wood-Background-Texture.jpg)] p-4 relative">
+      <div className="flex flex-col items-center flex-grow p-3">
+      <Header
+          colors={colors}
+          selectedColor={selectedColor}
+          setSelectedColor={setSelectedColor}
+          bookmarks={bookmarks}
+          goToBookmark={goToBookmark}
+          bookTitle={bookTitle}
+          onEditButtonClick={() => setIsModalOpen(true)}
+          selectedVoice={selectedVoice}
+          handleVoiceChange={handleVoiceChange}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          customFontSize={customFontSize}
+          setCustomFontSize={debouncedSetCustomFontSize}
+          pendingCustomFontSize={pendingCustomFontSize}
+          setPendingCustomFontSize={setPendingCustomFontSize}
+          goToPageNumber={goToPageNumber}
+          handleGoToPageInputChange={handleGoToPageInputChange}
+          handleGoToPage={handleGoToPage}
+          totalDynamicPages={totalDynamicPages}
+          extractedPages={extractedPages} // Pass extractedPages as a prop
+          readingSpeed={readingSpeed} // Pass reading speed to header
+        />
+
+        <EditModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          initialTitle={bookTitle}
+          initialCover={bookCoverPage}
+          initialEndCover={bookEndCoverPage}
+          onSave={handleSaveMetadataFromBook}
+        />
+
+<HTMLFlipBook
+    key={`flipbook-${dynamicPages.length}-${fontSize}-${customFontSize}`}
+    width={500}
+    height={600}
+    showCover={true}
+    disableFlipByClick={true}
+    useMouseEvents={true}
+    useTouchEvents={true}
+    onFlip={handlePageChange}
+    ref={pageFlipRef}
+>
+    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        {bookCoverPage ? (
+            <img
+                src={bookCoverPage}
+                alt="Book cover"
+                className="w-full h-full object-cover"
+                onError={(e) => (e.target.parentElement.style.background = "#f3f4f6")}
+            />
+        ) : (
+            <div className="text-gray-500">Loading cover...</div>
+        )}
+    </div>
+
+    {dynamicPages.flatMap((page, index) => [
+        <div key={`left-${index}`} className="left-page page bg-white">
+            {createPageLines("left", index)}
+            <div className="page-content flex flex-col h-full">
+                <div className="flex justify-between items-start p-6 pb-4">
+                    <span className="text-gray-500 font-medium">{page.displayPageNumber}</span>
+                    <AudioControl
+                        text={page.text}
+                        type="book"
+                        handleAudio={handleAudio}
+                        playingType={playingType}
+                        audioStatus={audioStatus}
+                        loadingType={loadingType}
+                        isBookmarked={isCurrentPageBookmarked()}
+                        toggleBookmark={toggleBookmark}
+                    />
+                </div>
+                <div className="flex-1 px-6 pb-6 overflow-y-auto">
+                    <p
+                        className="text-gray-700 text-justify text-sm leading-relaxed"
+                        style={getFontSizeStyle()}
+                    >
+                        {page.text}
+                    </p>
+                </div>
+            </div>
+        </div>,
+        <div key={`right-${index}`} className="right-page page bg-white">
+            {createPageLines("right", index)}
+            <div className="page-content flex flex-col h-full">
+                <div className="flex justify-between items-start p-6 pb-4">
+                    <span className="text-blue-500 font-medium">
+                        AI Summary - Page {page.originalPageNumber}
+                    </span>
+                    <AudioControl
+                        text={summaries[page.originalPageNumber]}
+                        type="summary"
+                        handleAudio={handleAudio}
+                        playingType={playingType}
+                        audioStatus={audioStatus}
+                        loadingType={loadingType}
+                    />
+                </div>
+                <div className="flex-1 px-6 pb-6 overflow-y-auto">
+                    <p
+                        className="text-gray-700 text-justify text-sm leading-relaxed"
+                        style={getFontSizeStyle()}
+                    >
+                        {summaries[page.originalPageNumber] || (
+                            <span className="text-gray-400">Generating summary...</span>
+                        )}
+                    </p>
+                </div>
+            </div>
+        </div>,
+    ])}
+
+    <div className="w-full h-full flex flex-col items-center justify-center text-center rounded-lg overflow-hidden relative">
+        {bookEndCoverPage ? (
+            <img
+                src={bookEndCoverPage}
+                alt="Back cover"
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => (e.target.parentElement.style.background = "#f3f4f6")}
+            />
+        ) : (
+            <div className="absolute inset-0 bg-gray-100" />
+        )}
+    </div>
+
+</HTMLFlipBook>
+
+        <BookControls
+          goPrevious={goPrevious}
+          goNext={goNext}
+          currentPage={currentPage}
+          totalDynamicPages={totalDynamicPages}
+          progressPercentage={progressPercentage}
+          pagesReadCounter={pagesReadCounter}
+          resetProgress={resetProgress}
+        />
+      </div>
+
+      <Chatbot currentPageText={currentVisiblePageText} />
+    </div>
+  );
 };
 
 export default Book;

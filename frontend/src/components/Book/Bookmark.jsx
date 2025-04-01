@@ -1,3 +1,5 @@
+// components/Bookmark.jsx
+import React from "react";
 import { Book, Palette, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,7 +59,7 @@ const Bookmark = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <div 
+            <div
               className="h-4 w-4 rounded-full border"
               style={{ backgroundColor: selectedColor }}
             />
@@ -71,7 +73,7 @@ const Bookmark = ({
                 onClick={() => setSelectedColor(color)}
                 className="p-0"
               >
-                <div 
+                <div
                   className="h-6 w-6 rounded-full border cursor-pointer"
                   style={{ backgroundColor: color }}
                 />
