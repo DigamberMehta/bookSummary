@@ -10,8 +10,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import authContext from "../context/authContext";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Login = () => {
   const [loginInput, setLoginInput] = useState({ email: "", password: "" });
@@ -22,8 +23,15 @@ const Login = () => {
   });
   const { user, isLoading, isError, registerUser, loginUser } =
     useContext(authContext);
+  const navigate = useNavigate(); // Initialize useNavigate
 
-    console.log(user, isLoading, isError);
+  console.log(user, isLoading, isError);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const changeInputHandler = (e, type) => {
     const { name, value } = e.target;

@@ -71,85 +71,94 @@ const PDFUpload = ({ onFileSelect }) => {
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <h2 className="mb-6 text-2xl font-bold text-white">Upload Your PDF</h2>
+    <div className="flex flex-col items-center space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-serif font-semibold text-gray-900 mb-2">
+          Upload Your PDF
+        </h2>
+        <p className="text-gray-600 max-w-prose">
+          Transform your documents into smart, searchable content with our secure PDF processing
+        </p>
+      </div>
 
-      <label className="group relative cursor-pointer">
-        <div className="flex h-32 w-96 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-600 bg-gray-800 p-6 transition-all hover:border-blue-500 hover:bg-gray-700">
-          <svg
-            className="mb-3 h-12 w-12 text-gray-400 transition group-hover:text-blue-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-            />
-          </svg>
-          <span className="text-center text-sm font-medium text-gray-300">
-            Click to select PDF file
-            <br />
-            <span className="text-xs text-gray-400">(Max size: 25MB)</span>
-          </span>
+      <label className="group relative cursor-pointer w-full max-w-2xl">
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white p-12 transition-all hover:border-indigo-500 hover:bg-indigo-50/30 h-96">
+          <div className="mb-6 transition-transform group-hover:scale-110">
+            <div className="relative inline-flex">
+              <div className="absolute inset-0 bg-indigo-100 rounded-full opacity-30 animate-ping"></div>
+              <div className="flex items-center justify-center h-16 w-16 bg-indigo-600 rounded-full text-white relative">
+                <svg
+                  className="h-8 w-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center space-y-1">
+            <p className="text-lg font-medium text-gray-900">
+              Drag & drop or <span className="text-indigo-600">browse files</span>
+            </p>
+            <p className="text-sm text-gray-500">
+              Supported format: PDF • Max size: 25MB
+            </p>
+          </div>
         </div>
 
         <input
           type="file"
           accept="application/pdf"
-          className="absolute inset-0 h-full w-full opacity-0"
+          className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
           onChange={handleFileChange}
         />
       </label>
 
       {uploadStatus && (
-        <div className="mt-6 w-full max-w-md">
-          <div className="flex items-center justify-center space-x-2">
-            {uploadStatus === "Uploading..." ||
-            uploadStatus.includes("Extracting") ||
-            uploadStatus.includes("Saving") ? (
-              <svg
-                className="h-5 w-5 animate-spin text-blue-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            ) : (
-              <svg
-                className="h-5 w-5 text-green-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            )}
+        <div className="w-full max-w-2xl">
+          <div className="flex items-center justify-center space-x-3 rounded-lg bg-white p-6 shadow-sm border border-gray-100">
+            <div className="flex-shrink-0">
+              {uploadStatus === "Uploading..." ||
+              uploadStatus.includes("Extracting") ||
+              uploadStatus.includes("Saving") ? (
+                <div className="relative flex h-6 w-6 items-center justify-center">
+                  <div className="h-full w-full animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"></div>
+                </div>
+              ) : (
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
+                  <svg
+                    className="h-4 w-4 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
             <span
-              className={`text-sm ${
-                uploadStatus.includes("success") ? "text-green-400" : "text-gray-300"
+              className={`text-base ${
+                uploadStatus.includes("success") 
+                  ? "text-green-700" 
+                  : uploadStatus.includes("failed") 
+                    ? "text-red-700"
+                    : "text-gray-700"
               }`}
             >
               {uploadStatus}

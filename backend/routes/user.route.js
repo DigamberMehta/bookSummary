@@ -8,13 +8,19 @@ const router = express.Router();
 router.route('/register').post(register);
 router.route('/login').post(login);
 
+router.post('/logout', (req, res) => {
+    
+    res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'None', secure: true });  
+    res.status(200).json({ message: 'Logout successful' });
+});
+
 router.get('/profile', authenticateUser, async (req, res) => {
     try {
       const user = await User.findById(req.userId).select('-password');  // Exclude sensitive fields like password
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-  
+
       res.status(200).json({ user });
     } catch (error) {
       console.error('Error fetching user profile:', error);

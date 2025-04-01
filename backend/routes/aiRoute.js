@@ -3,11 +3,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router = express.Router();
 
-// Directly use the API key (⚠️ Not recommended for production)
-const API_KEY = "AIzaSyDRUwv1V47t2vZP7GL2g5tSSfB2gEf91C0"; // Replace with your actual Gemini API key
+const API_KEY = "AIzaSyDRUwv1V47t2vZP7GL2g5tSSfB2gEf91C0";  
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// AI Summarization Route
+ 
 router.post("/summarize", async (req, res) => {
   const { text } = req.body;
 

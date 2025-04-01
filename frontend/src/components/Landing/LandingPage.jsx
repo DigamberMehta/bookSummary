@@ -1,12 +1,14 @@
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PDFUpload from "./PDFupload";
 import FeaturesSection from "./FeaturesSection";
 import CarouselSection from "./CarouselSection";
 import Banner from "./Banner";
-import Header from "./Header";
+import Header from "./Header"; // Assuming Header.js is in the same directory
 import Footer from "./Footer";
 import axios from "axios";
+import TeamSection from "./TeamSection";
+
 
 const LandingPage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -14,7 +16,6 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch books from API
     const fetchBooks = async () => {
       try {
         const res = await axios.get("http://localhost:3000/api/books");
@@ -26,9 +27,8 @@ const LandingPage = () => {
     fetchBooks();
   }, []);
 
-
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <Header />
 
@@ -36,37 +36,44 @@ const LandingPage = () => {
       <Banner />
 
       {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="max-w-3xl text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-6">
-            Get Quick, Insightful Summaries of Your Favorite Books
-          </h1>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="bg-indigo-600 text-white px-6 py-3 rounded font-semibold hover:bg-indigo-700 transition duration-200"
-          >
-            Start Summarizing Now
-          </button>
+      <section className="flex-1 flex items-center justify-center px-4 py-20 md:py-28">
+        <div className="max-w-4xl text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-gray-900 leading-tight">
+              Transform Reading with <span className="text-indigo-600">AI-Powered</span> Summaries
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+              Get instant, insightful summaries of any book in minutes, not hours
+            </p>
+          </div>
+          <div className="space-x-4">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              Start Summarizing Now
+            </button>
+            <button
+              className="px-8 py-3.5 border border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors duration-300"
+              onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
+            >
+              Learn More
+            </button>
+          </div>
         </div>
       </section>
 
       {/* PDF Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative mx-4 w-full max-w-2xl rounded-xl bg-gray-900 p-8 shadow-2xl">
-            <PDFUpload
-              onFileSelect={(bookId) => {
-                setShowUploadModal(false);
-                navigate(`/book/${bookId}`); // Navigate to book route with ID
-              }}
-            />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="relative mx-auto w-full max-w-3xl rounded-2xl bg-white p-8 shadow-xl">
             <button
-              className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-200"
+              className="absolute right-6 top-6 text-gray-400 hover:text-gray-600 transition-colors"
               onClick={() => setShowUploadModal(false)}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-7 w-7"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -79,18 +86,30 @@ const LandingPage = () => {
                 />
               </svg>
             </button>
+            <PDFUpload
+              onFileSelect={(bookId) => {
+                setShowUploadModal(false);
+                navigate(`/book/${bookId}`);
+              }}
+            />
           </div>
         </div>
       )}
 
       {/* Features Section */}
-      <FeaturesSection />
+      <div id="features">
+        <FeaturesSection />
+      </div>
 
       {/* Carousel Section */}
-      <CarouselSection  books={books} />
+      <div className="bg-gradient-to-b from-white to-gray-50 py-6">
+        <CarouselSection books={books} />
+      </div>
 
-      {/* Footer */}
-      <Footer />
+      <TeamSection />
+
+
+      {/* <Footer /> */}
     </div>
   );
 };
