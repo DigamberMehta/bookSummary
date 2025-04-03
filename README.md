@@ -61,8 +61,8 @@ An intelligent and interactive web application that allows users to upload PDF b
 1.  **Clone the Repo**
 
     ```bash
-    git clone [https://github.com/yourusername/ai-book-summary-app.git](https://github.com/yourusername/ai-book-summary-app.git)
-    cd ai-book-summary-app
+    git clone https://github.com/DigamberMehta/bookSummary
+    cd bookSummary
     ```
 
 2.  **Install Backend**
@@ -81,8 +81,7 @@ An intelligent and interactive web application that allows users to upload PDF b
     npm start
     ```
 
-    Make sure both frontend and backend are running on correct ports (frontend on `5173`, backend on `3000` by default).
-
+  
 ## Screenshots
 
 [Add screenshots/gifs here showing:]
