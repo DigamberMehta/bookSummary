@@ -84,7 +84,11 @@ router.post('/login', async (req, res) => {
 
 // Logout Route
 router.post('/logout', (req, res) => {
-  res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'None', secure: true });
+  res.clearCookie('token', { // Changed from 'refreshToken'
+    httpOnly: true,
+    sameSite: 'None',
+    secure: true 
+  });
   res.status(200).json({ message: 'Logout successful' });
 });
 
