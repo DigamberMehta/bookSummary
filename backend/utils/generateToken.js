@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 export const generateToken = (res, user, message) => {
   const token = jwt.sign({ id: user._id }, process.env.SECERT_KEY, {
     expiresIn: "30d",
