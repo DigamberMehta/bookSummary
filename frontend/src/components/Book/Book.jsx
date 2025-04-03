@@ -37,8 +37,16 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
     { code: "en", name: "English" },
     { code: "es", name: "Spanish" },
     { code: "fr", name: "French" },
-    { code: "de", name: "German" },
-    // Add more languages as needed
+    { code: "zh", name: "Chinese" },
+    { code: "ru", name: "Russian" },
+    { code: "ar", name: "Arabic" },
+    { code: "hi", name: "Hindi" },
+    { code: "bn", name: "Bengali" },
+    { code: "ta", name: "Tamil" },
+    { code: "mr", name: "Marathi" },
+
+  
+
   ];
 
   // Reading speed logic (remains the same)
@@ -228,7 +236,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [pagesToDisplay, lastFlippedPage, isPageRestored, pageFlipRef]); // Added pageFlipRef to dependencies
+  }, [pagesToDisplay, lastFlippedPage, isPageRestored, pageFlipRef]);  
 
   useEffect(() => {
     flipSoundRef.current = new Audio("/sound/sound.mp3");

@@ -1,5 +1,6 @@
 // components/ChatBot/Chatbot.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
 
 function Chatbot({ currentPageText }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,7 +51,7 @@ function Chatbot({ currentPageText }) {
 
 
       try {
-        const response = await fetch('https://booksummary.onrender.com/api/chatbot', {
+        const response = await fetch('http://localhost:3000/api/chatbot', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -179,7 +180,11 @@ function Chatbot({ currentPageText }) {
                     <span className="block text-xs font-semibold mb-1 text-gray-500">
                       {msg.sender === 'user' ? 'You' : 'AI'}
                     </span>
-                    {msg.text}
+                    {msg.sender === 'ai' ? (
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    ) : (
+                      msg.text
+                    )}
                   </p>
                 </div>
                 {msg.sender === 'user' && (
