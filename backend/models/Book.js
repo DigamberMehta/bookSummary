@@ -15,8 +15,8 @@ const bookSchema = new mongoose.Schema({
   pages: [pageSchema],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  category: { type: String }, // Added category field
+  subcategory: { type: String }, // Added subcategory field
 });
 
 export default mongoose.model('Book', bookSchema);
-
-

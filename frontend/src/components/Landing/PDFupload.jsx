@@ -1,72 +1,138 @@
 import React, { useState } from "react";
-
 const PDFUpload = ({ onFileSelect }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+
+  const categories = [
+    {
+      name: "Technical",
+      subcategories: ["Operating Systems", "AI", "Computer Networks", "Programming"],
+    },
+    {
+      name: "Fictional",
+      subcategories: ["Science Fiction", "Fantasy", "Mystery", "Thriller"],
+    },
+    {
+      name: "Educational",
+      subcategories: ["History", "Science", "Mathematics", "Literature"],
+    },
+    {
+      name: "Other",
+      subcategories: [],
+    },
+  ];
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
-
     if (file && file.type === "application/pdf") {
       setSelectedFile(file);
       setUploadStatus("Uploading...");
-
       const formData = new FormData();
       formData.append("pdf", file);
-
       try {
         // Step 1: Upload PDF
         const uploadResponse = await fetch("http://localhost:3000/api/upload", {
           method: "POST",
           body: formData,
         });
-
         const uploadData = await uploadResponse.json();
-
         if (!uploadResponse.ok) {
           setUploadStatus("Upload failed. Please try again.");
           return;
         }
-
         // Step 2: Extract text from PDF
         setUploadStatus("Upload successful! Extracting text...");
         const extractResponse = await fetch(
           `http://localhost:3000/api/extract-text?filePath=${uploadData.filePath}`
         );
         const extractData = await extractResponse.json();
-
         if (!extractResponse.ok) {
           setUploadStatus("Failed to extract text.");
           return;
         }
-
-        // Step 3: Save book to database
-        setUploadStatus("Saving book...");
-        const bookResponse = await fetch("http://localhost:3000/api/books", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            pages: extractData.pages.map((page) => ({
-              pageNumber: page.pageNumber,
-              text: page.text,
-            })),
-          }),
-        });
-
-        const bookData = await bookResponse.json();
-
-        if (bookResponse.ok) {
-          setUploadStatus("Book saved successfully!");
-          onFileSelect(bookData.bookId); // Pass book ID to parent
-        } else {
-          setUploadStatus("Failed to save book.");
-        }
+        // Step 3: Ask for book category
+        setUploadStatus("Text extracted successfully!");
+        setShowCategoryModal(true);
+        // Store the extracted data temporarily
+        sessionStorage.setItem("extractedPages", JSON.stringify(extractData.pages));
       } catch (error) {
         console.error("Error:", error);
         setUploadStatus("An error occurred. Please try again.");
       }
     } else {
       alert("Please select a valid PDF file.");
+    }
+  };
+
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+    setSelectedSubcategory(""); // Reset subcategory when category changes
+  };
+
+  const handleSubcategoryChange = (event) => {
+    setSelectedSubcategory(event.target.value);
+  };
+
+  const handleSaveBook = async () => {
+    setUploadStatus("Saving book...");
+    setShowCategoryModal(false);
+    const extractedPages = JSON.parse(sessionStorage.getItem("extractedPages"));
+    try {
+      const bookResponse = await fetch("http://localhost:3000/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pages: extractedPages.map((page) => ({
+            pageNumber: page.pageNumber,
+            text: page.text,
+          })),
+          category: selectedCategory || null,
+          subcategory: selectedSubcategory || null,
+        }),
+      });
+      const bookData = await bookResponse.json();
+      if (bookResponse.ok) {
+        setUploadStatus("Book saved successfully!");
+        onFileSelect(bookData.bookId); // Pass book ID to parent
+      } else {
+        setUploadStatus("Failed to save book.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setUploadStatus("An error occurred. Please try again.");
+    }
+  };
+
+  const handleSkipCategory = async () => {
+    setUploadStatus("Saving book...");
+    setShowCategoryModal(false);
+    const extractedPages = JSON.parse(sessionStorage.getItem("extractedPages"));
+    try {
+      const bookResponse = await fetch("http://localhost:3000/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pages: extractedPages.map((page) => ({
+            pageNumber: page.pageNumber,
+            text: page.text,
+          })),
+          category: null,
+          subcategory: null,
+        }),
+      });
+      const bookData = await bookResponse.json();
+      if (bookResponse.ok) {
+        setUploadStatus("Book saved successfully!");
+        onFileSelect(bookData.bookId); // Pass book ID to parent
+      } else {
+        setUploadStatus("Failed to save book.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setUploadStatus("An error occurred. Please try again.");
     }
   };
 
@@ -77,10 +143,10 @@ const PDFUpload = ({ onFileSelect }) => {
           Upload Your PDF
         </h2>
         <p className="text-gray-600 max-w-prose">
-          Transform your documents into smart, searchable content with our secure PDF processing
+          Transform your documents into smart, searchable content with our secure
+          PDF processing
         </p>
       </div>
-
       <label className="group relative cursor-pointer w-full max-w-2xl">
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white p-12 transition-all hover:border-indigo-500 hover:bg-indigo-50/30 h-96">
           <div className="mb-6 transition-transform group-hover:scale-110">
@@ -104,17 +170,16 @@ const PDFUpload = ({ onFileSelect }) => {
               </div>
             </div>
           </div>
-          
           <div className="text-center space-y-1">
             <p className="text-lg font-medium text-gray-900">
-              Drag & drop or <span className="text-indigo-600">browse files</span>
+              Drag & drop or{" "}
+              <span className="text-indigo-600">browse files</span>
             </p>
             <p className="text-sm text-gray-500">
               Supported format: PDF • Max size: 25MB
             </p>
           </div>
         </div>
-
         <input
           type="file"
           accept="application/pdf"
@@ -122,8 +187,7 @@ const PDFUpload = ({ onFileSelect }) => {
           onChange={handleFileChange}
         />
       </label>
-
-      {uploadStatus && (
+      {uploadStatus && !showCategoryModal && (
         <div className="w-full max-w-2xl">
           <div className="flex items-center justify-center space-x-3 rounded-lg bg-white p-6 shadow-sm border border-gray-100">
             <div className="flex-shrink-0">
@@ -154,11 +218,11 @@ const PDFUpload = ({ onFileSelect }) => {
             </div>
             <span
               className={`text-base ${
-                uploadStatus.includes("success") 
-                  ? "text-green-700" 
-                  : uploadStatus.includes("failed") 
-                    ? "text-red-700"
-                    : "text-gray-700"
+                uploadStatus.includes("success")
+                  ? "text-green-700"
+                  : uploadStatus.includes("failed")
+                  ? "text-red-700"
+                  : "text-gray-700"
               }`}
             >
               {uploadStatus}
@@ -166,8 +230,73 @@ const PDFUpload = ({ onFileSelect }) => {
           </div>
         </div>
       )}
+
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-10 overflow-y-auto bg-gray-500 bg-opacity-75">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full">
+              <h2 className="text-xl font-semibold mb-4">Categorize Your Book (Optional)</h2>
+              <div className="mb-4">
+                <label htmlFor="category" className="block text-gray-700 text-sm font-bold mb-2">
+                  Category
+                </label>
+                <select
+                  id="category"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.name} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedCategory && selectedCategory !== "Other" && (
+                <div className="mb-4">
+                  <label htmlFor="subcategory" className="block text-gray-700 text-sm font-bold mb-2">
+                    Subcategory
+                  </label>
+                  <select
+                    id="subcategory"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    value={selectedSubcategory}
+                    onChange={handleSubcategoryChange}
+                  >
+                    <option value="">Select Subcategory</option>
+                    {categories
+                      .find((cat) => cat.name === selectedCategory)
+                      ?.subcategories.map((subcat) => (
+                        <option key={subcat} value={subcat}>
+                          {subcat}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  onClick={handleSkipCategory}
+                >
+                  Skip
+                </button>
+                <button
+                  className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  onClick={handleSaveBook}
+                >
+                  Save Book
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default PDFUpload;

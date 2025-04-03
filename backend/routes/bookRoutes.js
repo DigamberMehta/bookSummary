@@ -3,12 +3,21 @@ import Book from '../models/Book.js';
 
 const router = express.Router();
 
-// Create a new book with initial pages
+// Create a new book with initial pages and optional category/subcategory
 router.post('/api/books', async (req, res) => {
   try {
-    const book = await Book.create({
-      pages: req.body.pages,
-    });
+    const { pages, category, subcategory } = req.body;
+    const bookData = {
+      pages: pages,
+    };
+    if (category) {
+      bookData.category = category;
+    }
+    if (subcategory) {
+      bookData.subcategory = subcategory;
+    }
+
+    const book = await Book.create(bookData);
     res.json({ success: true, bookId: book._id });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -18,7 +27,7 @@ router.post('/api/books', async (req, res) => {
 // Add to your book routes (e.g., routes/bookRoutes.js)
 router.get('/api/books', async (req, res) => {
   try {
-    const books = await Book.find({}, 'title coverPage');
+    const books = await Book.find({}, 'title coverPage category subcategory'); // Include category and subcategory in the fields returned
     res.json({ success: true, books });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -59,12 +68,14 @@ router.get('/api/books/:bookId', async (req, res) => {
 // Update book metadata (title/covers)
 router.patch('/api/books/:bookId', async (req, res) => {
   try {
-    const { title, coverPage, endCoverPage } = req.body;
+    const { title, coverPage, endCoverPage, category, subcategory } = req.body;
     const updates = {};
-    
+
     if (title !== undefined) updates.title = title;
     if (coverPage !== undefined) updates.coverPage = coverPage;
     if (endCoverPage !== undefined) updates.endCoverPage = endCoverPage;
+    if (category !== undefined) updates.category = category;
+    if (subcategory !== undefined) updates.subcategory = subcategory;
 
     const book = await Book.findByIdAndUpdate(
       req.params.bookId,
@@ -79,6 +90,3 @@ router.patch('/api/books/:bookId', async (req, res) => {
 });
 
 export default router;
-
-
-
