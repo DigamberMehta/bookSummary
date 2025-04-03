@@ -49,7 +49,7 @@ const Home = () => {
     const fetchBook = async () => {
       try {
         const response = await fetch(
-          `https://booksummary.onrender.com/api/books/${bookId}`
+          `http://localhost:3000/api/books/${bookId}`
         );
         const data = await response.json();
 
@@ -84,7 +84,7 @@ const Home = () => {
   const handleSaveMetadata = async (metadata) => {
     try {
       const response = await fetch(
-        `https://booksummary.onrender.com/api/books/${bookId}`,
+        `http://localhost:3000/api/books/${bookId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -127,7 +127,7 @@ const Home = () => {
     setBookmarks(updatedBookmarks);
 
     // Sync bookmarks with backend
-    fetch(`https://booksummary.onrender.com/api/books/${bookId}`, {
+    fetch(`http://localhost:3000/api/books/${bookId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bookmarks: updatedBookmarks }),
@@ -141,7 +141,7 @@ const Home = () => {
     try {
       // Get summary from AI
       const summaryResponse = await fetch(
-        "https://booksummary.onrender.com/api/summarize",
+        "http://localhost:3000/api/summarize",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -159,7 +159,7 @@ const Home = () => {
 
         // Update database
         await fetch(
-          `https://booksummary.onrender.com/api/books/${bookId}/page/${pageNumber}`,
+          `http://localhost:3000/api/books/${bookId}/page/${pageNumber}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -238,7 +238,7 @@ const Home = () => {
   const fetchAndPlayAudio = async (text, type) => {
     try {
       setLoadingType(type);
-      const ttsResponse = await fetch("https://booksummary.onrender.com/api/tts", {
+      const ttsResponse = await fetch("http://localhost:3000/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: selectedVoice }), // Include selectedVoice

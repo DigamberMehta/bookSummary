@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   // Helper: Fetch the authenticated user (on page refresh or initial load)
   const fetchUser = async () => {
     try {
-      const response = await axios.get('https://booksummary.onrender.com/api/v1/user/profile', {
+      const response = await axios.get('http://localhost:3000/api/v1/user/profile', {
         withCredentials: true, // Include cookies
       });
       setUser(response.data.user);
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     setIsError(null);
     try {
       const response = await axios.post(
-        'https://booksummary.onrender.com/api/v1/user/register',
+        'http://localhost:3000/api/v1/user/register',
         userData,
         { withCredentials: true } // Include cookies
       );
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     setIsError(null);
     try {
       const response = await axios.post(
-        'https://booksummary.onrender.com/api/v1/user/login',
+        'http://localhost:3000/api/v1/user/login',
         credentials,
         { withCredentials: true } // Include cookies
       );
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     setIsError(null);
     try {
       await axios.post(
-        'https://booksummary.onrender.com/api/v1/user/logout',
+        'http://localhost:3000/api/v1/user/logout',
         {}, // Body is empty for logout
         { withCredentials: true } // Include cookies
       );

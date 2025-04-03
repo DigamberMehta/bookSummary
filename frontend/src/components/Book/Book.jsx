@@ -1,4 +1,3 @@
-// Book.jsx
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import HTMLFlipBook from "react-pageflip";
 import Header from "./Header";
@@ -6,7 +5,7 @@ import AudioControl from "./AudioControl";
 import EditModal from "./EditModal";
 import Chatbot from "../ChatBot/Chatbot";
 import BookControls from "./BookControls";
-import DictionaryWidget from "./DictionaryWidget";  
+import DictionaryWidget from "./DictionaryWidget";
 
 const debounce = (func, delay) => {
   let timeout;
@@ -44,10 +43,10 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
     { code: "bn", name: "Bengali" },
     { code: "ta", name: "Tamil" },
     { code: "mr", name: "Marathi" },
-
-  
-
   ];
+
+  const [hasStartedReading, setHasStartedReading] = useState(false);
+  const totalContentPages = dynamicPages.length;
 
   // Reading speed logic (remains the same)
   const [pageStartTime, setPageStartTime] = useState(null);
@@ -236,7 +235,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [pagesToDisplay, lastFlippedPage, isPageRestored, pageFlipRef]);  
+  }, [pagesToDisplay, lastFlippedPage, isPageRestored, pageFlipRef]);
 
   useEffect(() => {
     flipSoundRef.current = new Audio("/sound/sound.mp3");
@@ -386,11 +385,60 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
     setIsDictionaryOpen(!isDictionaryOpen);
   };
 
+  useEffect(() => {
+    if (bookId && !hasStartedReading) {
+      const startReading = async () => {
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/books/${bookId}/start-reading`,
+            {
+              method: "PATCH",
+            }
+          );
+          if (response.ok) {
+            console.log("Started reading book:", bookId);
+            setHasStartedReading(true);
+          } else {
+            console.error("Failed to mark book as started:", response.status);
+          }
+        } catch (error) {
+          console.error("Error marking book as started:", error);
+        }
+      };
+      startReading();
+    }
+  }, [bookId, hasStartedReading]);
+
+  useEffect(() => {
+    if (pagesToDisplay.length > 0 && pagesReadCounter === pagesToDisplay.length && bookId) {
+      // Call the "complete reading" API
+      const completeReading = async () => {
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/books/${bookId}/complete-reading`,
+            {
+              method: "PATCH",
+            }
+          );
+          if (response.ok) {
+            console.log("Completed reading book:", bookId);
+            // Optionally, you could update some state here to indicate completion
+          } else {
+            console.error("Failed to mark book as completed:", response.status);
+          }
+        } catch (error) {
+          console.error("Error marking book as completed:", error);
+        }
+      };
+      completeReading();
+    }
+  }, [pagesReadCounter, pagesToDisplay.length, bookId]);
+
   if (!pagesToDisplay) return null;
 
   return (
     <div className="flex min-h-screen bg-[url(https://unblast.com/wp-content/uploads/2020/05/Light-Wood-Background-Texture.jpg)] p-4 relative">
- 
+
     <div className="fixed bottom-4 left-4 z-[9999]">
       <button
         onClick={toggleDictionary}
@@ -427,7 +475,6 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           customFontSize={customFontSize}
           setCustomFontSize={debouncedSetCustomFontSize}
           pendingCustomFontSize={pendingCustomFontSize}
-          setPendingCustomFontSize={setPendingCustomFontSize}
           goToPageNumber={goToPageNumber}
           handleGoToPageInputChange={handleGoToPageInputChange}
           handleGoToPage={handleGoToPage}
@@ -460,7 +507,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           onFlip={handlePageChange}
           ref={pageFlipRef}
         >
-         
+
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             {bookCoverPage ? (
               <img

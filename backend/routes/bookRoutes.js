@@ -88,5 +88,51 @@ router.patch('/api/books/:bookId', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+router.patch('/api/books/:bookId/start-reading', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.bookId);
+    if (!book) {
+      return res.status(404).json({ success: false, error: 'Book not found' });
+    }
+
+    console.log(`Book ID: ${book._id} - Before start reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+
+    book.categoryKnowledgeScore = (book.categoryKnowledgeScore || 0) + 0.5;
+    book.subcategoryKnowledgeScore = (book.subcategoryKnowledgeScore || 0) + 1;
+
+    await book.save();
+
+    console.log(`Book ID: ${book._id} - After start reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+
+    res.json({ success: true, message: 'Book reading started, knowledge score updated.' });
+  } catch (error) {
+    console.error('Error starting to read book:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Route to handle when a user completes reading a book
+router.patch('/api/books/:bookId/complete-reading', async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.bookId);
+    if (!book) {
+      return res.status(404).json({ success: false, error: 'Book not found' });
+    }
+
+    console.log(`Book ID: ${book._id} - Before complete reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+
+    book.categoryKnowledgeScore = (book.categoryKnowledgeScore || 0) + 1;
+    book.subcategoryKnowledgeScore = (book.subcategoryKnowledgeScore || 0) + 2;
+
+    await book.save();
+
+    console.log(`Book ID: ${book._id} - After complete reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+
+    res.json({ success: true, message: 'Book reading completed, knowledge score updated.' });
+  } catch (error) {
+    console.error('Error completing reading book:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 export default router;

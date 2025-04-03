@@ -17,6 +17,9 @@ const bookSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   category: { type: String }, // Added category field
   subcategory: { type: String }, // Added subcategory field
+  // Fields to track knowledge score (Note: This is not the ideal place, see explanation below)
+  categoryKnowledgeScore: { type: Number, default: 0 },
+  subcategoryKnowledgeScore: { type: Number, default: 0 },
 });
 
 export default mongoose.model('Book', bookSchema);
