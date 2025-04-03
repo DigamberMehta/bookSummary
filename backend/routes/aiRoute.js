@@ -1,9 +1,11 @@
 import express from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
 
+
+dotenv.config();
 const router = express.Router();
-
-const API_KEY = "AIzaSyDRUwv1V47t2vZP7GL2g5tSSfB2gEf91C0";  
+const API_KEY = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
  

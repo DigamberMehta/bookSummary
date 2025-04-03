@@ -8,7 +8,7 @@ const Home = () => {
   const { bookId } = useParams(); // Get bookId from URL
 
   // -- API Base URL --
-  const [apiBaseUrl, setApiBaseUrl] = useState("https://booksummary.onrender.com"); // You can set a default here
+  const [apiBaseUrl, setApiBaseUrl] = useState("http://localhost:3000"); // You can set a default here
 
   // -- Book states --
   const [book, setBook] = useState(null); // Store the entire book data

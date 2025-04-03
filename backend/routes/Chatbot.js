@@ -7,7 +7,10 @@ dotenv.config();
 const router = express.Router();
 
 // Replace with your actual ChatGPT API key from .env
-const openai = new OpenAI({ apiKey: "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" });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 
 const chatHistory = {};
 
@@ -55,7 +58,9 @@ router.post("/chatbot", async (req, res) => {
     res.json({ response: text });
   } catch (error) {
     console.error("Error processing chatbot request:", error);
-    res.status(500).json({ error: error.message || "Failed to process message" });
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to process message" });
   }
 });
 
@@ -64,10 +69,17 @@ router.post("/chatbot", async (req, res) => {
 const chatHistories = {};
 
 router.post("/chatbot/page-action", async (req, res) => {
-  const { actionType, pageRange, summaries, messages, currentPage, extractedPages } = req.body;
+  const {
+    actionType,
+    pageRange,
+    summaries,
+    messages,
+    currentPage,
+    extractedPages,
+  } = req.body;
 
   // Simple way to get a user identifier (replace with your actual user identification logic)
-  const userId = req.sessionID || 'anonymous';
+  const userId = req.sessionID || "anonymous";
 
   if (!actionType) {
     return res.status(400).json({ error: "Missing action type" });
@@ -76,7 +88,9 @@ router.post("/chatbot/page-action", async (req, res) => {
   try {
     if (actionType === "combine" && summaries) {
       // Combine summaries
-      const combinedSummary = Object.values(summaries).filter(summary => summary).join("\n\n");
+      const combinedSummary = Object.values(summaries)
+        .filter((summary) => summary)
+        .join("\n\n");
       res.json({ response: combinedSummary });
     } else if (actionType === "discuss" && pageRange && summaries) {
       // Discuss previous pages
@@ -95,7 +109,9 @@ router.post("/chatbot/page-action", async (req, res) => {
         .join("\n\n");
 
       if (!relevantSummaries) {
-        return res.json({ response: "No summaries available for the specified range." });
+        return res.json({
+          response: "No summaries available for the specified range.",
+        });
       }
 
       const modelName = "gpt-3.5-turbo";
@@ -112,7 +128,13 @@ router.post("/chatbot/page-action", async (req, res) => {
 
       const discussionResponse = completion.choices[0].message.content;
       res.json({ response: discussionResponse });
-    } else if (actionType === "chat" && messages && summaries && currentPage && extractedPages) {
+    } else if (
+      actionType === "chat" &&
+      messages &&
+      summaries &&
+      currentPage &&
+      extractedPages
+    ) {
       // Handle chat requests with history
       const modelName = "gpt-3.5-turbo";
 
@@ -124,7 +146,10 @@ router.post("/chatbot/page-action", async (req, res) => {
       // Add the user's message to the history
       if (messages && messages.length > 0) {
         const latestUserMessage = messages[messages.length - 1];
-        chatHistories[userId].push({ role: "user", content: latestUserMessage.text });
+        chatHistories[userId].push({
+          role: "user",
+          content: latestUserMessage.text,
+        });
       }
 
       // Construct the prompt with the latest history
@@ -132,10 +157,17 @@ router.post("/chatbot/page-action", async (req, res) => {
 
       // Add context about the current page (optional, can be included in the prompt)
       const currentPageNumber = Math.ceil(currentPage / 2);
-      const currentSummary = summaries[currentPageNumber] || "No summary available for the current page.";
-      const currentPageText = extractedPages.find(page => page.pageNumber === currentPageNumber)?.text || "No content available for the current page.";
+      const currentSummary =
+        summaries[currentPageNumber] ||
+        "No summary available for the current page.";
+      const currentPageText =
+        extractedPages.find((page) => page.pageNumber === currentPageNumber)
+          ?.text || "No content available for the current page.";
 
-      promptMessages.push({ role: "system", content: `You are a helpful chatbot assisting a user reading a book. The current page number is ${currentPageNumber}. Here's the summary of the current page: ${currentSummary}. Here's the content of the current page (if available): ${currentPageText}` });
+      promptMessages.push({
+        role: "system",
+        content: `You are a helpful chatbot assisting a user reading a book. The current page number is ${currentPageNumber}. Here's the summary of the current page: ${currentSummary}. Here's the content of the current page (if available): ${currentPageText}`,
+      });
 
       const completion = await openai.chat.completions.create({
         model: modelName,
@@ -153,11 +185,15 @@ router.post("/chatbot/page-action", async (req, res) => {
 
       res.json({ response: chatResponse });
     } else {
-      return res.status(400).json({ error: "Invalid action type or missing required parameters" });
+      return res
+        .status(400)
+        .json({ error: "Invalid action type or missing required parameters" });
     }
   } catch (error) {
     console.error("Error processing page action request:", error);
-    res.status(500).json({ error: error.message || "Failed to process page action" });
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to process page action" });
   }
 });
 export default router;
