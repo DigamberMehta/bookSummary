@@ -16,7 +16,7 @@ const debounce = (func, delay) => {
   };
 };
 
-const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook, selectedVoice, handleVoiceChange,
+const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook, selectedVoice, handleVoiceChange, apiBaseUrl // Receive apiBaseUrl as a prop
 }) => {
   const flipSoundRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,7 +148,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       return text; // No need to translate if no text or target is English (original)
     }
     try {
-      const response = await fetch("https://booksummary.onrender.com/api/translate", {
+      const response = await fetch(`${apiBaseUrl}/api/translate`, { // Use apiBaseUrl here
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -165,7 +165,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       console.error("Error fetching translation:", error);
       return text; // Return original text on error
     }
-  }, []);
+  }, [apiBaseUrl]); // Add apiBaseUrl to the dependency array
 
   // Translate dynamic pages when language changes
   useEffect(() => {
@@ -392,14 +392,14 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       const startReading = async () => {
         try {
           const response = await fetch(
-            `http://localhost:3000/api/books/${bookId}/start-reading`,
+            `${apiBaseUrl}/api/books/${bookId}/start-reading`, // Use apiBaseUrl here
             {
               method: "PATCH",
               credentials: 'include'
             }
           );
           if (response.ok) {
-            console.log("Started reading book:", bookId);
+
             setHasStartedReading(true);
           } else {
             console.error("Failed to mark book as started:", response.status);
@@ -410,7 +410,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       };
       startReading();
     }
-  }, [bookId, hasStartedReading, user]); // Added user to the dependency array
+  }, [bookId, hasStartedReading, user, apiBaseUrl]); // Add apiBaseUrl to the dependency array
 
   useEffect(() => {
     if (pagesToDisplay.length > 0 && pagesReadCounter === pagesToDisplay.length && bookId && user) { // Ensure user is available
@@ -418,14 +418,14 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       const completeReading = async () => {
         try {
           const response = await fetch(
-            `http://localhost:3000/api/books/${bookId}/complete-reading`,
+            `${apiBaseUrl}/api/books/${bookId}/complete-reading`, // Use apiBaseUrl here
             {
               method: "PATCH",
               credentials: 'include'
             }
           );
           if (response.ok) {
-            console.log("Completed reading book:", bookId);
+
             // Optionally, you could update some state here to indicate completion
           } else {
             console.error("Failed to mark book as completed:", response.status);
@@ -436,7 +436,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       };
       completeReading();
     }
-  }, [pagesReadCounter, pagesToDisplay.length, bookId, user]); // Added user to the dependency array
+  }, [pagesReadCounter, pagesToDisplay.length, bookId, user, apiBaseUrl]); // Add apiBaseUrl to the dependency array
 
   if (!pagesToDisplay) return null;
 
@@ -609,7 +609,12 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       </div>
 
       {/* Chatbot remains on the right */}
-      <Chatbot currentPageText={currentVisiblePageText} selectedTranslationLanguage={selectedTranslationLanguage} fetchTranslatedText={fetchTranslatedText} />
+      <Chatbot
+        currentPageText={currentVisiblePageText}
+        selectedTranslationLanguage={selectedTranslationLanguage}
+        fetchTranslatedText={fetchTranslatedText}
+        apiBaseUrl={apiBaseUrl} // Pass apiBaseUrl to Chatbot
+      />
     </div>
   );
 };

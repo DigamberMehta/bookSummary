@@ -8,6 +8,12 @@ const pageSchema = new mongoose.Schema({
   audio: String, // Base64 string for audio
 });
 
+const bookmarkSchema = new mongoose.Schema({
+  pageNumber: { type: Number, required: true },
+  color: { type: String },
+  textSnippet: { type: String },
+});
+
 const bookSchema = new mongoose.Schema({
   title: { type: String, default: "Untitled Book" }, // Initially empty string
   coverPage: { type: String, default: "https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg" }, // Default cover image
@@ -17,6 +23,7 @@ const bookSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   category: { type: String }, // Added category field
   subcategory: { type: String }, // Added subcategory field
+  bookmarks: [bookmarkSchema], // Added bookmarks field
 });
 
 export default mongoose.model('Book', bookSchema);

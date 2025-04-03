@@ -176,4 +176,44 @@ router.patch('/api/books/:bookId/complete-reading', authenticateUser, async (req
   }
 });
 
+
+router.post('/api/books/:bookId/bookmarks', authenticateUser, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.bookId);
+    if (!book) {
+      return res.status(404).json({ success: false, error: 'Book not found' });
+    }
+
+    const { pageNumber, color, textSnippet } = req.body;
+    const newBookmark = { pageNumber, color, textSnippet };
+    book.bookmarks.push(newBookmark);
+    await book.save();
+
+    res.json({ success: true, bookmarks: book.bookmarks });
+  } catch (error) {
+    console.error('Error adding bookmark:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Route to remove a bookmark
+router.delete('/api/books/:bookId/bookmarks/:pageNumber', authenticateUser, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.bookId);
+    if (!book) {
+      return res.status(404).json({ success: false, error: 'Book not found' });
+    }
+
+    const pageNumberToDelete = parseInt(req.params.pageNumber);
+    book.bookmarks = book.bookmarks.filter(
+      (bookmark) => bookmark.pageNumber !== pageNumberToDelete
+    );
+    await book.save();
+
+    res.json({ success: true, bookmarks: book.bookmarks });
+  } catch (error) {
+    console.error('Error removing bookmark:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 export default router;

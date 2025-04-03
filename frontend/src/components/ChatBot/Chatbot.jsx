@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
 
-function Chatbot({ currentPageText }) {
+function Chatbot({ currentPageText, selectedTranslationLanguage, fetchTranslatedText, apiBaseUrl }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -51,7 +51,7 @@ function Chatbot({ currentPageText }) {
 
 
       try {
-        const response = await fetch('http://localhost:3000/api/chatbot', {
+        const response = await fetch(`${apiBaseUrl}/api/chatbot`, { // Use apiBaseUrl here
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

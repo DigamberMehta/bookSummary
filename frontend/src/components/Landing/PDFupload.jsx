@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-const PDFUpload = ({ onFileSelect }) => {
+const PDFUpload = ({ onFileSelect, apiBaseUrl }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -34,7 +34,7 @@ const PDFUpload = ({ onFileSelect }) => {
       formData.append("pdf", file);
       try {
         // Step 1: Upload PDF
-        const uploadResponse = await fetch("http://localhost:3000/api/upload", {
+        const uploadResponse = await fetch(`${apiBaseUrl}/api/upload`, {
           method: "POST",
           body: formData,
         });
@@ -46,7 +46,7 @@ const PDFUpload = ({ onFileSelect }) => {
         // Step 2: Extract text from PDF
         setUploadStatus("Upload successful! Extracting text...");
         const extractResponse = await fetch(
-          `http://localhost:3000/api/extract-text?filePath=${uploadData.filePath}`
+          `${apiBaseUrl}/api/extract-text?filePath=${uploadData.filePath}`
         );
         const extractData = await extractResponse.json();
         if (!extractResponse.ok) {
@@ -81,7 +81,7 @@ const PDFUpload = ({ onFileSelect }) => {
     setShowCategoryModal(false);
     const extractedPages = JSON.parse(sessionStorage.getItem("extractedPages"));
     try {
-      const bookResponse = await fetch("http://localhost:3000/api/books", {
+      const bookResponse = await fetch(`${apiBaseUrl}/api/books`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,7 +111,7 @@ const PDFUpload = ({ onFileSelect }) => {
     setShowCategoryModal(false);
     const extractedPages = JSON.parse(sessionStorage.getItem("extractedPages"));
     try {
-      const bookResponse = await fetch("http://localhost:3000/api/books", {
+      const bookResponse = await fetch(`${apiBaseUrl}/api/books`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

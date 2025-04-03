@@ -14,18 +14,19 @@ const LandingPage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [books, setBooks] = useState([]);
   const navigate = useNavigate();
+  const [apiBaseUrl, setApiBaseUrl] = useState("https://booksummary.onrender.com"); // Define base URL variable
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const res = await axios.get("https://booksummary.onrender.com/api/books");
+        const res = await axios.get(`${apiBaseUrl}/api/books`); // Use the variable here
         setBooks(res.data.books);
       } catch (error) {
         console.error("Error fetching books:", error);
       }
     };
     fetchBooks();
-  }, []);
+  }, [apiBaseUrl]); // Add apiBaseUrl to the dependency array
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50">
@@ -91,6 +92,7 @@ const LandingPage = () => {
                 setShowUploadModal(false);
                 navigate(`/book/${bookId}`);
               }}
+              apiBaseUrl={apiBaseUrl} // Pass the base URL to PDFUpload
             />
           </div>
         </div>
