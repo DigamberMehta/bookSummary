@@ -7,11 +7,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(null);
+  const [apiBaseUrl] = useState('https://booksummary.onrender.com'); // Define base URL variable
 
   // Helper: Fetch the authenticated user (on page refresh or initial load)
   const fetchUser = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/v1/user/profile', {
+      const response = await axios.get(`${apiBaseUrl}/api/v1/user/profile`, {
         withCredentials: true, // Include cookies
       });
       setUser(response.data.user);
@@ -19,7 +20,6 @@ export const AuthProvider = ({ children }) => {
       console.error('Error fetching user:', error.response?.data?.message || error.message);
       setUser(null);
     }
-    
   };
 
   // Register User
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     setIsError(null);
     try {
       const response = await axios.post(
-        'http://localhost:3000/api/v1/user/register',
+        `${apiBaseUrl}/api/v1/user/register`,
         userData,
         { withCredentials: true } // Include cookies
       );
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     setIsError(null);
     try {
       const response = await axios.post(
-        'http://localhost:3000/api/v1/user/login',
+        `${apiBaseUrl}/api/v1/user/login`,
         credentials,
         { withCredentials: true } // Include cookies
       );
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     setIsError(null);
     try {
       await axios.post(
-        'http://localhost:3000/api/v1/user/logout',
+        `${apiBaseUrl}/api/v1/user/logout`,
         {}, // Body is empty for logout
         { withCredentials: true } // Include cookies
       );
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if a user is already logged in on component mount
     fetchUser();
-  }, []);
+  }, [apiBaseUrl]); // Add apiBaseUrl to the dependency array
 
   return (
     <AuthContext.Provider
@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }) => {
         registerUser,
         loginUser,
         logoutUser,
+        apiBaseUrl, // Optionally expose apiBaseUrl if other components might need it directly
       }}
     >
       {children}
