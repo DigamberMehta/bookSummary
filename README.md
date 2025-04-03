@@ -102,12 +102,6 @@ An intelligent and interactive web application that allows users to upload PDF b
 * `/api/chatbot` - **POST:** Ask AI-based questions about the book. (Request body: `{"question": string, "book_content": string}`)
 * `/api/dictionary` - **GET:** Look up the definition of a word. (Query parameter: `word`)
 
-## To-Do / Future Improvements
-
-* [ ] Gantt Chart for API call timings visualization.
-* [ ] Real-time syncing of reading progress and bookmarks between devices.
-* [ ] PWA Support for offline reading capability.
-* [ ] User Authentication (for saving progress and bookmarks across sessions).
-* [ ] Support for EPUB and MOBI book formats.
+ 
 
  
