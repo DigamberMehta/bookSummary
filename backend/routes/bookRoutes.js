@@ -1,5 +1,7 @@
 import express from 'express';
 import Book from '../models/Book.js';
+import User from '../models/user.model.js'; // Import the User model
+import authenticateUser from '../middlewares/authenticateUser.js'; // Import the authentication middleware
 
 const router = express.Router();
 
@@ -88,49 +90,88 @@ router.patch('/api/books/:bookId', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-router.patch('/api/books/:bookId/start-reading', async (req, res) => {
+
+router.patch('/api/books/:bookId/start-reading', authenticateUser, async (req, res) => {
+  
   try {
-    const book = await Book.findById(req.params.bookId);
+    const bookId = req.params.bookId;
+    const userId = req.userId;
+    const book = await Book.findById(bookId);
     if (!book) {
       return res.status(404).json({ success: false, error: 'Book not found' });
     }
 
-    console.log(`Book ID: ${book._id} - Before start reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
 
-    book.categoryKnowledgeScore = (book.categoryKnowledgeScore || 0) + 0.5;
-    book.subcategoryKnowledgeScore = (book.subcategoryKnowledgeScore || 0) + 1;
+    const category = book.category || 'Other';
+    const subcategory = book.subcategory || '';
 
-    await book.save();
+    const categoryScore = user.knowledgeScores.get(category)?.score || 0;
+    const subcategoryScore = user.knowledgeScores.get(category)?.subcategories?.get(subcategory) || 0;
 
-    console.log(`Book ID: ${book._id} - After start reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+    console.log(`User ID: ${userId}, Book ID: ${bookId} - Before start reading: Category Score=${categoryScore}, Subcategory Score=${subcategoryScore}`);
 
-    res.json({ success: true, message: 'Book reading started, knowledge score updated.' });
+    user.knowledgeScores.set(category, {
+      score: categoryScore + 0.5,
+      subcategories: new Map(user.knowledgeScores.get(category)?.subcategories).set(subcategory, subcategoryScore + 1),
+    });
+
+    await user.save();
+
+    const updatedCategoryScore = user.knowledgeScores.get(category)?.score;
+    const updatedSubcategoryScore = user.knowledgeScores.get(category)?.subcategories?.get(subcategory);
+
+    console.log(`User ID: ${userId}, Book ID: ${bookId} - After start reading: Category Score=${updatedCategoryScore}, Subcategory Score=${updatedSubcategoryScore}`);
+
+    res.json({ success: true, message: 'Book reading started, user knowledge score updated.' });
   } catch (error) {
-    console.error('Error starting to read book:', error);
+    console.error('Error starting to read book (user-specific):', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Route to handle when a user completes reading a book
-router.patch('/api/books/:bookId/complete-reading', async (req, res) => {
+router.patch('/api/books/:bookId/complete-reading', authenticateUser, async (req, res) => {
   try {
-    const book = await Book.findById(req.params.bookId);
+    const bookId = req.params.bookId;
+    const userId = req.userId;
+
+    const book = await Book.findById(bookId);
     if (!book) {
       return res.status(404).json({ success: false, error: 'Book not found' });
     }
 
-    console.log(`Book ID: ${book._id} - Before complete reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
 
-    book.categoryKnowledgeScore = (book.categoryKnowledgeScore || 0) + 1;
-    book.subcategoryKnowledgeScore = (book.subcategoryKnowledgeScore || 0) + 2;
+    const category = book.category || 'Other';
+    const subcategory = book.subcategory || '';
 
-    await book.save();
+    const categoryScore = user.knowledgeScores.get(category)?.score || 0;
+    const subcategoryScore = user.knowledgeScores.get(category)?.subcategories?.get(subcategory) || 0;
 
-    console.log(`Book ID: ${book._id} - After complete reading: Category Score=${book.categoryKnowledgeScore}, Subcategory Score=${book.subcategoryKnowledgeScore}`);
+    console.log(`User ID: ${userId}, Book ID: ${bookId} - Before complete reading: Category Score=${categoryScore}, Subcategory Score=${subcategoryScore}`);
 
-    res.json({ success: true, message: 'Book reading completed, knowledge score updated.' });
+    user.knowledgeScores.set(category, {
+      score: categoryScore + 1,
+      subcategories: new Map(user.knowledgeScores.get(category)?.subcategories).set(subcategory, subcategoryScore + 2),
+    });
+
+    await user.save();
+
+    const updatedCategoryScore = user.knowledgeScores.get(category)?.score;
+    const updatedSubcategoryScore = user.knowledgeScores.get(category)?.subcategories?.get(subcategory);
+
+    console.log(`User ID: ${userId}, Book ID: ${bookId} - After complete reading: Category Score=${updatedCategoryScore}, Subcategory Score=${updatedSubcategoryScore}`);
+
+    res.json({ success: true, message: 'Book reading completed, user knowledge score updated.' });
   } catch (error) {
-    console.error('Error completing reading book:', error);
+    console.error('Error completing reading book (user-specific):', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

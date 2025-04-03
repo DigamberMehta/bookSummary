@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback, useContext } from "react";
 import HTMLFlipBook from "react-pageflip";
 import Header from "./Header";
 import AudioControl from "./AudioControl";
@@ -6,6 +6,7 @@ import EditModal from "./EditModal";
 import Chatbot from "../ChatBot/Chatbot";
 import BookControls from "./BookControls";
 import DictionaryWidget from "./DictionaryWidget";
+import AuthContext from "../../context/authContext"; // Import the AuthContext
 
 const debounce = (func, delay) => {
   let timeout;
@@ -47,6 +48,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
 
   const [hasStartedReading, setHasStartedReading] = useState(false);
   const totalContentPages = dynamicPages.length;
+  const { user } = useContext(AuthContext); // Access the user object from AuthContext
 
   // Reading speed logic (remains the same)
   const [pageStartTime, setPageStartTime] = useState(null);
@@ -386,13 +388,14 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
   };
 
   useEffect(() => {
-    if (bookId && !hasStartedReading) {
+    if (bookId && user && !hasStartedReading) { // Ensure user is available
       const startReading = async () => {
         try {
           const response = await fetch(
             `http://localhost:3000/api/books/${bookId}/start-reading`,
             {
               method: "PATCH",
+              credentials: 'include'
             }
           );
           if (response.ok) {
@@ -407,10 +410,10 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       };
       startReading();
     }
-  }, [bookId, hasStartedReading]);
+  }, [bookId, hasStartedReading, user]); // Added user to the dependency array
 
   useEffect(() => {
-    if (pagesToDisplay.length > 0 && pagesReadCounter === pagesToDisplay.length && bookId) {
+    if (pagesToDisplay.length > 0 && pagesReadCounter === pagesToDisplay.length && bookId && user) { // Ensure user is available
       // Call the "complete reading" API
       const completeReading = async () => {
         try {
@@ -418,6 +421,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
             `http://localhost:3000/api/books/${bookId}/complete-reading`,
             {
               method: "PATCH",
+              credentials: 'include'
             }
           );
           if (response.ok) {
@@ -432,7 +436,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
       };
       completeReading();
     }
-  }, [pagesReadCounter, pagesToDisplay.length, bookId]);
+  }, [pagesReadCounter, pagesToDisplay.length, bookId, user]); // Added user to the dependency array
 
   if (!pagesToDisplay) return null;
 

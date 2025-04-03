@@ -15,7 +15,18 @@ const userSchema = new mongoose.Schema({
   totalPagesRead: { type: Number, default: 0 }, // Overall pages read
   favoriteBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }], // List of favorite books
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+  knowledgeScores: {
+    type: Map,
+    of: new mongoose.Schema({
+      score: { type: Number, default: 0 },
+      subcategories: {
+        type: Map,
+        of: { type: Number, default: 0 },
+      },
+    }),
+    default: {},
+  },
 });
 
 // Create and export model
