@@ -1,461 +1,182 @@
-import React, { useRef, useEffect, useState } from "react";
-import HTMLFlipBook from "react-pageflip";
-import TopBar from "./TopBar";
-import AudioControl from "./AudioControl";
-import EditModal from "./EditModal";
+document.addEventListener("keydown", function (event) {
+  if (event.altKey && event.key === "n") {
+    event.preventDefault();
 
-const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio, playingType, audioStatus, loadingType, bookmarks, isCurrentPageBookmarked, toggleBookmark, selectedColor, setSelectedColor, colors, goToBookmark, handleFlip, bookId, bookTitle, bookCoverPage, bookEndCoverPage, handleSaveMetadataFromBook }) => {
-  const flipSoundRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+    const questionElement = document.querySelector(
+      '.ql-editor[aria-labelledby="question-data"]'
+    );
+    let questionText = questionElement ? questionElement.innerText : "";
 
-  useEffect(() => {
-    flipSoundRef.current = new Audio("/sound/sound.mp3");
-  }, []);
+    const aceLayer = document.querySelector(".ace_layer.ace_text-layer");
+    const allLines = aceLayer ? aceLayer.querySelectorAll(".ace_line") : [];
+    let codeText = "";
+    allLines.forEach(function (line) {
+      codeText += line.innerText + "\n\n";
+    });
 
-  if (!extractedPages) return null;
+    const optionsColorElements = document.querySelectorAll(".options-color");
+    let optionsText = "";
+    optionsColorElements.forEach((option, index) => {
+      optionsText += `${index + 1}. ${option.innerText
+        .replace(/\n{3,}/g, "\n")
+        .trim()}\n`;
+    });
 
-  const totalPages = 2 + extractedPages.length * 2;
-  const numberOfLines = 5; // Number of border lines
-  const lineSpacing = 3; // Spacing between lines - reduced for closer lines
-  const lineColor = 'rgb(220, 220, 220)'; // Light gray color
+    let optionsHeader = "\n\nThese are the options:\n\n";
+    let finalText = `${questionText.trim()}\n\n${codeText.trim()}${optionsHeader}${optionsText.trim()}\n\n`;
 
+    navigator.clipboard.writeText(finalText.trim()).catch((err) => {});
+  }
+});
 
-  // Function to generate layered border style for left page with gaps and light gray color
-  const getLeftPageBorderStyle = () => {
-    let boxShadow = '';
-    for (let i = 1; i <= numberOfLines; i++) {
-      boxShadow += `-1px 0 0 ${lineColor}, ${-i * lineSpacing}px ${i * lineSpacing}px 0 ${lineColor}, `; // Vertical and horizontal offset for spacing, light gray color
+document.addEventListener("keydown", (event) => {
+  if (event.getModifierState("CapsLock")) {
+    event.preventDefault();
+    handleDoubleClickOnSpecificContainer();
+  }
+});
+
+async function handleDoubleClickOnSpecificContainer() {
+  try {
+    const gptGeneratedContentLines = document.querySelectorAll(
+      ".ace_content .ace_line"
+    );
+    const questionContentContainer = document.querySelector(
+      'div[aria-labelledby="each-type-question"]'
+    );
+    const headerSnippet = document.querySelector(
+      '[aria-labelledby="header-header"]'
+    );
+    const footerSnippet = document.querySelector(
+      '[aria-labelledby="footer-header"]'
+    );
+
+    if (!gptGeneratedContentLines.length || !questionContentContainer) {
+      return;
     }
-    boxShadow = boxShadow.slice(0, -2);
-    return boxShadow;
-  };
 
-  // Function to generate layered border style for right page with gaps and light gray color
-  const getRightPageBorderStyle = () => {
-    let boxShadow = '';
-    for (let i = 1; i <= numberOfLines; i++) {
-      boxShadow += `1px 0 0 ${lineColor}, ${i * lineSpacing}px ${i * lineSpacing}px 0 ${lineColor}, `; // Vertical and horizontal offset for spacing, light gray color
+    let headerText = "";
+    let footerText = "";
+
+    if (headerSnippet) {
+      headerText = `\n${headerSnippet.textContent.trim()}\n`;
     }
-    boxShadow = boxShadow.slice(0, -2);
-    return boxShadow;
-  };
+    if (footerSnippet) {
+      footerText = `\n${footerSnippet.textContent.trim()}\n`;
+    }
 
-  const goPrevious = () => {
-    pageFlipRef.current.pageFlip().flipPrev("top");
-  };
+    const gptTextToCopy =
+      "\n" +
+      Array.from(gptGeneratedContentLines)
+        .map((el) => el.textContent.trim())
+        .join("\n");
 
-  const goNext = () => {
-    pageFlipRef.current.pageFlip().flipNext("top");
-  };
+    let modifiedText = gptTextToCopy;
 
-  return (
-    <div className="flex flex-col items-center min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-8">
-      <TopBar
-        colors={colors}
-        selectedColor={selectedColor}
-        setSelectedColor={setSelectedColor}
-        bookmarks={bookmarks}
-        goToBookmark={goToBookmark}
-      />
-
-      <div className="w-full max-w-4xl mx-auto mt-2 mb-4 p-4 flex flex-col items-center gap-2 backdrop-blur-sm bg-white/10 rounded-lg">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 text-white rounded-md text-sm"
-        >
-          Update Book Details
-        </button>
-        <h2 className="text-4xl font-bold text-white text-center bg-transparent">
-         TITTLE :  {bookTitle}
-        </h2>
-      </div>
-
-      <EditModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialTitle={bookTitle}
-        initialCover={bookCoverPage}
-        initialEndCover={bookEndCoverPage}
-        onSave={handleSaveMetadataFromBook}
-      />
-
-      <HTMLFlipBook
-        width={550}
-        height={700}
-        showCover={true}
-        disableFlipByClick={true}
-        useMouseEvents={true}
-        useTouchEvents={true}
-        onFlip={(e) => {
-          if (flipSoundRef.current) {
-            flipSoundRef.current.currentTime = 0;
-            flipSoundRef.current.play().catch((error) => {
-              console.error("Failed to play flip sound:", error);
-            });
-          }
-          handleFlip(e);
-        }}
-        ref={pageFlipRef}
-      >
-        {/* Front Cover */}
-        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}></div>
-
-        {/* Content Pages */}
-        {extractedPages.flatMap((page, index) => [
-          // Left Page (Original)
-          <div
-            key={`left-${index}`}
-            className="w-full h-full bg-white flex flex-col rounded-xl overflow-hidden left-page page"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-start p-6 pb-4">
-              <span className="text-gray-500 font-medium">
-                Page {page.pageNumber}
-              </span>
-              <AudioControl
-                text={page.text}
-                type="book"
-                handleAudio={handleAudio}
-                playingType={playingType}
-                audioStatus={audioStatus}
-                loadingType={loadingType}
-                isBookmarked={isCurrentPageBookmarked()}
-                toggleBookmark={toggleBookmark}
-              />
-            </div>
-            <div className="flex-1 overflow-auto px-6 pb-6">
-              <p className="text-gray-700 leading-relaxed text-justify text-xs">
-                {page.text}
-              </p>
-            </div>
-          </div>,
-
-          // Right Page (Summary)
-          <div
-            key={`right-${index}`}
-            className="w-full h-full bg-gray-50 flex flex-col rounded-xl overflow-hidden right-page page"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-start p-6 pb-4">
-              <span className="text-blue-500 font-medium">AI Summary</span>
-              <AudioControl
-                text={summaries[page.pageNumber]}
-                type="summary"
-                handleAudio={handleAudio}
-                playingType={playingType}
-                audioStatus={audioStatus}
-                loadingType={loadingType}
-              />
-            </div>
-            <div className="flex-1 overflow-auto px-6 pb-6">
-              <p className="text-gray-700 leading-relaxed text-justify text-xs">
-                {summaries[page.pageNumber] || (
-                  <span className="text-gray-400">Generating summary...</span>
-                )}
-              </p>
-            </div>
-          </div>,
-        ])}
-
-        {/* Back Cover */}
-        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}>
-          <div className="bg-black bg-opacity-50 p-8 rounded-lg">
-            <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
-            <p className="text-lg text-white">Continue your journey with</p>
-            <p className="text-2xl text-blue-400 font-mono mt-2">
-              Storybook AI
-            </p>
-          </div>
-        </div>
-      </HTMLFlipBook>
-
-      {/* Navigation Controls */}
-      <div className="flex items-center gap-4 mt-4">
-        <button
-          onClick={goPrevious}
-          disabled={currentPage === 0}
-          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-        >
-          <i className="fa-solid fa-chevron-left cursor-pointer"></i>
-        </button>
-
-        <span className="text-white font-medium">
-          {currentPage > 0 && currentPage <= extractedPages.length
-            ? `Page ${currentPage} of ${extractedPages.length}`
-            : "Cover Page"}
-        </span>
-
-        <button
-          onClick={goNext}
-          disabled={currentPage === totalPages - 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-        >
-          <i className="fa-solid fa-chevron-right cursor-pointer"></i>
-        </button>
-      </div>
-
-      <style jsx>{`
-        .left-page.page {
-          border-left: 1px solid black;
-          box-shadow: ${getLeftPageBorderStyle()}; /* Apply boxShadow from function */
-          font-family: 'Courier New', Courier, monospace;
-        }
-        .right-page.page {
-          border-right: 1px solid black;
-          box-shadow: ${getRightPageBorderStyle()}; /* Apply boxShadow from function */
-          font-family: 'Courier New', Courier, monospace;
-        }
-      `}</style>
-    </div>
-  );
-};
-
-export default Book;
-
-
-
-//deep seek
-import React, { useRef, useEffect, useState } from "react";
-import HTMLFlipBook from "react-pageflip";
-import TopBar from "./TopBar";
-import AudioControl from "./AudioControl";
-import EditModal from "./EditModal";
-
-
-const Book = ({
-  extractedPages,
-  pageFlipRef,
-  currentPage,
-  summaries,
-  handleAudio,
-  playingType,
-  audioStatus,
-  loadingType,
-  bookmarks,
-  isCurrentPageBookmarked,
-  toggleBookmark,
-  selectedColor,
-  setSelectedColor,
-  colors,
-  goToBookmark,
-  handleFlip,
-  bookId,
-  bookTitle,
-  bookCoverPage,
-  bookEndCoverPage,
-  handleSaveMetadataFromBook
-}) => {
-  const flipSoundRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    flipSoundRef.current = new Audio("/sound/sound.mp3");
-  }, []);
-
-  if (!extractedPages) return null;
-
-  const totalPages = 2 + extractedPages.length * 2;
-
-  const goPrevious = () => {
-    pageFlipRef.current.pageFlip().flipPrev("top");
-  };
-
-  const goNext = () => {
-    pageFlipRef.current.pageFlip().flipNext("top");
-  };
-
-  // Function to generate multiple layered borders
-  const generateLayeredBorders = (index, side) => {
-    const borders = [];
-    const totalLayers = Math.min(index + 1, 5); // Max 5 layers
-    for (let i = 0; i < totalLayers; i++) {
-      const width = 1 + i;
-      const opacity = 0.3 - (i * 0.05);
-      const offset = width * 2; // Spacing between layers
-      borders.push(
-        `inset ${side === 'left' ? '-' : ''}${offset}px 0 0 rgba(0, 0, 0, ${opacity})`
+    if (headerText) {
+      modifiedText = modifiedText.replace(
+        /(#include\s*<\S+>)/,
+        `${headerText}\n$1\n`
       );
     }
-    return borders.join(', ');
-  };
+    if (footerText) {
+      modifiedText = modifiedText.replace(
+        /(int\s+main\s*\(\)\s*\{)/,
+        `\n${footerText}\n$1\n`
+      );
+    }
 
-  return (
-    <div className="flex flex-col items-center min-h-screen bg-[url(/background/background.jpeg)] bg-cover bg-center p-8">
-      <TopBar
-        colors={colors}
-        selectedColor={selectedColor}
-        setSelectedColor={setSelectedColor}
-        bookmarks={bookmarks}
-        goToBookmark={goToBookmark}
-      />
+    const completeTextToCopy = `${modifiedText}`;
 
-      <div className="w-full max-w-4xl mx-auto mt-2 mb-4 p-4 flex flex-col items-center gap-2 backdrop-blur-sm bg-white/10 rounded-lg">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 text-white rounded-md text-sm"
-        >
-          Update Book Details
-        </button>
-        <h2 className="text-4xl font-bold text-white text-center bg-transparent">
-          TITTLE : {bookTitle}
-        </h2>
-      </div>
+    const instructionCardContainer = document.querySelector(
+      '[aria-labelledby="instruction-card"]'
+    );
 
-      <EditModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialTitle={bookTitle}
-        initialCover={bookCoverPage}
-        initialEndCover={bookEndCoverPage}
-        onSave={handleSaveMetadataFromBook}
-      />
+    let finalPromptText = "";
 
-      <HTMLFlipBook
-        width={550}
-        height={700}
-        showCover={true}
-        disableFlipByClick={true}
-        useMouseEvents={true}
-        useTouchEvents={true}
-        onFlip={(e) => {
-          if (flipSoundRef.current) {
-            flipSoundRef.current.currentTime = 0;
-            flipSoundRef.current.play().catch(console.error);
-          }
-          handleFlip(e);
-        }}
-        ref={pageFlipRef}
-      >
-        {/* Front Cover */}
-        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}></div>
+    if (!instructionCardContainer) {
+      finalPromptText = `${questionContentContainer.innerText
+        .replace(/\n{3,}/g, "\n")
+        .trim()} ${completeTextToCopy} \n please solve the question in a simple way in java`;
+    } else {
+      finalPromptText = `${questionContentContainer.innerText
+        .replace(/\n{3,}/g, "\n")
+        .trim()} \n\n use these Whitelist keyword compulsory while solving the problem  ${instructionCardContainer.innerText
+        .replace(/\n+/g, " ")
+        .trim()} ${completeTextToCopy}`;
+    }
 
-        {/* Content Pages */}
-        {extractedPages.flatMap((page, index) => [
-          // Left Page (Original)
-          <div
-            key={`left-${index}`}
-            className="left-page page"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              boxShadow: generateLayeredBorders(index, 'left')
-            }}
-          >
-            <div className="flex justify-between items-start p-6 pb-4">
-              <span className="text-gray-500 font-medium">
-                Page {page.pageNumber}
-              </span>
-              <AudioControl
-                text={page.text}
-                type="book"
-                handleAudio={handleAudio}
-                playingType={playingType}
-                audioStatus={audioStatus}
-                loadingType={loadingType}
-                isBookmarked={isCurrentPageBookmarked()}
-                toggleBookmark={toggleBookmark}
-              />
-            </div>
-            <div className="flex-1 overflow-auto px-6 pb-6">
-              <p className="text-gray-700 leading-relaxed text-justify text-[16px]">
-                {page.text}
-              </p>
-            </div>
-          </div>,
+    const extractedText = extractAndFormatText();
+    if (extractedText) {
+      finalPromptText += `\n\n${extractedText}`;
+    }
 
-          // Right Page (Summary)
-          <div
-            key={`right-${index}`}
-            className="right-page page"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              boxShadow: generateLayeredBorders(index, 'right')
-            }}
-          >
-            <div className="flex justify-between items-start p-6 pb-4">
-              <span className="text-blue-500 font-medium">AI Summary</span>
-              <AudioControl
-                text={summaries[page.pageNumber]}
-                type="summary"
-                handleAudio={handleAudio}
-                playingType={playingType}
-                audioStatus={audioStatus}
-                loadingType={loadingType}
-              />
-            </div>
-            <div className="flex-1 overflow-auto px-6 pb-6">
-              <p className="text-gray-700 leading-relaxed text-justify text-[16px]">
-                {summaries[page.pageNumber] || (
-                  <span className="text-gray-400">Generating summary...</span>
-                )}
-              </p>
-            </div>
-          </div>
-        ])}
+    await navigator.clipboard.writeText(finalPromptText);
+  } catch (error) {
+    console.error("Error in handleDoubleClickOnSpecificContainer:", error);
+  }
+}
 
-        {/* Back Cover */}
-        <div className={`w-full h-full bg-[url(https://miblart.com/wp-content/uploads/2020/08/ZXAfJR0M-663x1024-1.jpg)] flex flex-col items-center justify-center text-center rounded-lg overflow-hidden bg-cover bg-center bg-no-repeat`}>
-          <div className="bg-black bg-opacity-50 p-8 rounded-lg">
-            <h2 className="text-3xl font-bold text-white mb-4">The End</h2>
-            <p className="text-lg text-white">Continue your journey with</p>
-            <p className="text-2xl text-blue-400 font-mono mt-2">
-              Storybook AI
-            </p>
-          </div>
-        </div>
-      </HTMLFlipBook>
-
-      {/* Navigation Controls */}
-      <div className="flex items-center gap-4 mt-4">
-        <button
-          onClick={goPrevious}
-          disabled={currentPage === 0}
-          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-        >
-          <i className="fa-solid fa-chevron-left cursor-pointer"></i>
-        </button>
-
-        <span className="text-white font-medium">
-          {currentPage > 0 && currentPage <= extractedPages.length
-            ? `Page ${currentPage} of ${extractedPages.length}`
-            : "Cover Page"}
-        </span>
-
-        <button
-          onClick={goNext}
-          disabled={currentPage === totalPages - 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded-[50%] hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-        >
-          <i className="fa-solid fa-chevron-right cursor-pointer"></i>
-        </button>
-      </div>
-    </div>
+function extractAndFormatText() {
+  const resultSummaryElement = document.querySelector(
+    '[aria-labelledby="tc-message"]'
   );
-};
+  const resultSummary = resultSummaryElement
+    ? resultSummaryElement.innerText
+    : "";
 
-export default Book;
+  const compilerMessageElement = document.querySelector(
+    'pre[aria-labelledby="tc-message"]'
+  );
+  const compilerMessage = compilerMessageElement
+    ? compilerMessageElement.innerText
+    : "";
 
-/// style
-.page {
-  width: 100%;
-  height: 100%;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  border-color: rgba(0, 0, 0, 0.3);
-  border-style: solid;
-  border-width: 0;
-  position: relative;
-  overflow: hidden;
-}
+  const testCases = document.querySelectorAll(
+    '[aria-labelledby="tc-sample-outer-cont"]'
+  );
 
-/* Left page specific styles */
-.left-page {
-  border-left-width: 3px;
-  border-right-width: 0;
-}
+  let formattedText = "";
 
-/* Right page specific styles */
-.right-page {
-  border-right-width: 3px;
-  border-left-width: 0;
+  if (resultSummary) {
+    formattedText += `Result Summary: ${resultSummary}\n`;
+  }
+
+  if (compilerMessage) {
+    formattedText += `\nCompiler Message:\n${compilerMessage}\n`;
+  }
+
+  testCases.forEach((testCase, index) => {
+    const testCaseStatusElement = testCase.querySelector(
+      '[aria-labelledby="tc-sample-header"]'
+    );
+    const testCaseStatus = testCaseStatusElement
+      ? testCaseStatusElement.innerText
+      : "";
+
+    const expectedOutputElement = testCase.querySelector(
+      'pre[aria-labelledby="tc-field-message"]'
+    );
+    const expectedOutput = expectedOutputElement
+      ? expectedOutputElement.innerText
+      : "";
+
+    const actualOutputElements = testCase.querySelectorAll(
+      'pre[aria-labelledby="tc-field-message"]'
+    );
+    const actualOutput =
+      actualOutputElements.length > 1
+        ? actualOutputElements[1].innerText
+        : "";
+
+    if (testCaseStatus || expectedOutput || actualOutput) {
+      formattedText += `\n${
+        testCaseStatus || `Testcase ${index + 1} - Status not available`
+      }\nExpected Output:\n${
+        expectedOutput || "No expected output"
+      }\nActual Output:\n${actualOutput || "No Output"}\n`;
+    }
+  });
+
+  return formattedText.trim() ? formattedText : "";
 }

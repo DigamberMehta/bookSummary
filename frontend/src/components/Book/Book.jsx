@@ -512,12 +512,12 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
           ref={pageFlipRef}
         >
 
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 ">
             {bookCoverPage ? (
               <img
                 src={bookCoverPage}
                 alt="Book cover"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-fit rounded-xl"
                 onError={(e) => (e.target.parentElement.style.background = "#f3f4f6")}
               />
             ) : (
@@ -544,7 +544,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
                 </div>
                 <div className="flex-1 px-6 pb-6 overflow-y-auto">
                   <p
-                    className="text-gray-700 text-justify text-sm leading-relaxed"
+                    className="text-gray-700 text-justify text-sm leading-relaxed rounded-xl"
                     style={getFontSizeStyle()}
                   >
                     {page.text}
@@ -570,7 +570,7 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
                 </div>
                 <div className="flex-1 px-6 pb-6 overflow-y-auto">
                   <p
-                    className="text-gray-700 text-justify text-sm leading-relaxed"
+                    className="text-gray-700 text-justify text-sm leading-relaxed rounded-xl"
                     style={getFontSizeStyle()}
                   >
                     {summariesToDisplay[page.originalPageNumber] || (
@@ -582,12 +582,12 @@ const Book = ({ extractedPages, pageFlipRef, currentPage, summaries, handleAudio
             </div>,
           ])}
 
-          <div className="w-full h-full flex flex-col items-center justify-center text-center rounded-lg overflow-hidden relative">
+          <div className="w-full h-full flex flex-col items-center justify-center text-center rounded-xl overflow-hidden relative">
             {bookEndCoverPage ? (
               <img
                 src={bookEndCoverPage}
                 alt="Back cover"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-fit"
                 onError={(e) => (e.target.parentElement.style.background = "#f3f4f6")}
               />
             ) : (
