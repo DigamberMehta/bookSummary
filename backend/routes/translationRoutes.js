@@ -6,16 +6,21 @@ const { v2 } = pkg; // ✅ This line defines v2 correctly
 const router = express.Router();
 
 
+
 // Define service account credentials directly
 const GOOGLE_CREDENTIALS = {
-    type: "service_account",
-    project_id: "solid-shelter-435509-f9",
-    private_key_id: "69ecf5dd9ae4745f93a3079295b3f92eb96a6dd8",
-    private_key: `-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDBa4jMn3POsPHk\nuz4yJHVARIWUSDLCqlAAohYLm4RBTs0xvJGkecVMHR+AZ0uNe4bAgFU+wuquCyIW\naF+CU+ZlDR6uDTsjD1NtwnpKCmAbceY5FYiZymPss6C1C0+ABxbQLfg3IV69Kxdl\npyLbscLLTO6TITFCfAMrbglg2uzljUwXcdIR+64sPvPUwA+kEkA7T/09mJOl8Fjc\n9HUcpdh1ZtQZLOr2q02GJ+Sz2GMgLiBafUtmTAf1IRSjFCoDhiNVbglcKi7BWdnW\nVElsH6/5wqUiBwYyYWJcrkAIj4D4U8MoaO2giKKNpPuEEyd3abaBoV4GGWH8B8EI\nE6ZXpwBlAgMBAAECggEAH81GA1ruSBw40YJl4gmzi5sYmX5bdj1ZhRkhZcwurSw/\nOb/G9JOe+HpLXSnetscKK2mOWpDi1DX5Z1TG619PIOtM0ZJUWFnjPkc9IyJclfae\nw2ECgkLQNjF8qXfQHP1NZ3I/fxUKBjFpGeompZevLw0ZpvBMsKFCRihD+3xTehR9\nJ3OWGGQz9ndQQiiFjeq199tEmti+Y7lg4Rrsf+ouABn5uT8efFY7HUsO4eLT6yPV\nQwcDhyUWEmngM4rh2E/LS9g051yDWJjKFlM9TjCUbjqFJQjdCDAMXWr2b6ZL09oD\nwVo9VEfdW3/ak2054GgkxRusFJpgBAvmAA7RYKzzmwKBgQD7ao5TjVIbESggEJSa\nWERI26qkYWUKCp3blUPHrt8w0Oyo8jRU0glE4HVF+sucgz+PQqWw3tI29h0XiHKa\n1yBdzfgVO1n38+nJMF2EKpFjpLKCDgm2pVqKoioIFaX3ixZVnQnwLaukhrFvFeEk\nz/vyd/uM1WqAbYmPqtP2zsUhiwKBgQDE8kpvTU/ekVwcZNj9kjc9K/3DDcyE2yD2\n1g/uWaw9CRRP4E7MHAoX3Ql2NKHGuH8iU58kcz5YkaMH/KitZn5SkBWuk4FPZp+f\nlUpMlL7tV5IVDEShJSgXF0UuZUmmEyqxR834JndRgLExGX4KEzp4CwPhgU47eyHt\n2KBVR5zDzwKBgGyvTKWr4wGWch0ibcsnOyWv6F21SMOFgWZKaYmp/AwTVStXwO2l\n+qHO0oOU/m5DgreAnTYPrRpbXIouzzRGqVRD1OoAxUzeIYN6qAKZkE5eBVkZjnNp\nmfFyVu81xJB1jQsnnwM4CwpNu+iEsdaDHqxb19+y5p5sO9pig80e57MvAoGAWND3\ndnhEI5gkFP35yWjOFn0nRHaNnACCPi7NIm04OpJEob0DbBLdDmP1J2SW7Fo5o05Y\nv4RlQmXzQt/TZdeJ8kveK0uEDj22kK4vwpd1/uz2CR3uOUnbaYZqAYFWFFoib651\nGYqnVo8V2ZGogHypaod1KZY5pKNj6rI9pBfWf4sCgYAzrUpycT6P8yJunllRAzgz\ncEMxmKSbkbyk82AP7f16pLz7bSQom2Y1DTN3W5UPrkuskzliIlWgBbUDJNtHVWsF\nEyygt9LbPJC7lVjYcK8v52yqMQynDyX8kZT0+ltpPnSn8FyDplixxjyT81xEAr6V\nF7Xy6qfJplhwMAMDXxWrKA==\n-----END PRIVATE KEY-----\n`,
-    client_email: "book-summary@solid-shelter-435509-f9.iam.gserviceaccount.com",
-    client_id: "102998580579079063230"
-  };
-  
+  type: "service_account",
+  project_id: "industrial-pad-456007-h6",
+  private_key_id: "7acf538b2444bc376ff72610a79b114ddc4f0c88",
+  private_key: `-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQD0sarFAv2VZfUE\ny8Jl+CJqPfpgUTcnp+aMc8hbyTRaUgVpLR7NVKcJ3YaMZueFXjRNo2HNwMmTHaNi\nSETxKza28SwIGZOqWkbeuHVo4re6NJ5hzEBJRmJVzBen5l27YQhmNiCvQBvVXh9B\n+5OwCAI0IEsQApSkGvWFFnRtjMWmbn8s4xkhxeLAzVTDOL52KZSr7o0i6kXA314o\nASUfxd74lC12mzPmrY72B70xC7hqP+3ce2yHiwJOUqQEq0mSvyQxTlZIC1chJAfp\nwlzGO2Fv49wK10MfM9Oqe39mrjtRvPaKUcjv56KMI0/GJA8a0JUBUCkyclEeDcyL\niidKD5DXAgMBAAECggEAW9bRHueL8MZXK4kkeewjUpfXgM4KsvYYGHAea6C9Zwbw\n4/Rc4rkahp/f75Nx4wMkA13GiBiLL43ItEsmoRPUkd475gBfhWkjv1UhMBAj4B3+\nsfscx8PEhao32LskQ/9bzS0UoGIh8DfG6Jd5a3DeDt1t/uDRFDTQILb4VOOojVmg\nuERBs2/UYwwUVBaozuSmxRahdfN+JNcVpd6y0a39uBr6uBAMfWNFCSOEdRqS58Vf\nV2fkemmcqFbk6+gOf64g1Uo9lGqaeVYVXZ04PGkC48+U/LOAWazYwgfoGDhThWAU\nwYtid23X2TK5vcE7zHjueQGYn3ibRvLRTZpVxMZeCQKBgQD+VmdkJDPeY3BlIkkV\ng/tSe4YQsl+jIG5djn+l6iUDkM1o2I5+1bJ0S6It6+/ZJaeZiPt7hNoaOMHDw4Y6\naWckY1JAnPFuRkfIDHIF0vPvXBim9sVTU+Rv+6py3Z5PoNcPWx3jeAAe9RxRq7mz\nCjT8C/ql8L5vhkPPMIiaDTCfvwKBgQD2SyBQNkqQ1jtKKYvDmBKL9enaALPOfGXM\neU0eb6BfyInmt6JDbplyExCksqdBXF+Yu3AKNuZOmrw/LcAgr3RKxBTF0eYQwhWl\nI3BoKxOfjMAxas01ty4J/zqZ5RDcK9YZCl5v6WVFWjBrp0Q3IanUlXrL5UFOlzsx\n/22xXHzU6QKBgETkcq0VgVdD6DX8y38gePsmqnHrXyx4pGyDJOB0RAJrPrifsDl6\n+RO3SP7XYeiX4oYcLMKQgeOIbDPyynEYC/A3VxhZaqxMLTVq6ZfaRGkZsTPItDqW\nBtKugMUMcs1u69IlBDuRTbcU/c7BjVOJ+EAtnn9EbtEWtVdx9g6EdB9RAoGATzWI\nFePwBTaw6MAF0AjXZiXXaKIzMaQ2RRV55OD3jfZ7yzShvdgTB2n0P1OpkM65e/BE\nLzTKytre0d7P3HMxDl6TY6+GszsIJQ0JuKap7/UfVoVHrA/WgaaQ3S+bRYPfnjwE\ndS91v2ErE2Q+/xAXg2PzkyGO6Eyg4AqK57CcAQkCgYEAqBeid5mQjCY9F53iJkLc\nWvdkVY1QzgIx4XUqDUmZVVPtxe725innjGb4h4OE+yLWWAlLE8kJYxOfXO1L3tfY\noGXJma5EV9dL+D7x3UYrRWPxuUSgE2oRRB70Ecs94uF2Ao+vxAjzkhFnUlKD7E3i\nTq0AsiAv8W6AbWArL3sp+Mw=\n-----END PRIVATE KEY-----\n`,
+  client_email: "book-summary@industrial-pad-456007-h6.iam.gserviceaccount.com",
+  client_id: "102957416005222537299",
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/book-summary%40industrial-pad-456007-h6.iam.gserviceaccount.com",
+  universe_domain: "googleapis.com"
+};
 
 const translate = new v2.Translate({
     credentials: GOOGLE_CREDENTIALS,
